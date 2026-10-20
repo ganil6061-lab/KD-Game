@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Speed Blitz - Brain Trainer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0B0F19',
+                        cardbg: '#131C2E',
+                        accent: '#10B981',
+                        accenthover: '#059669',
+                        danger: '#EF4444',
+                        warning: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .glow-emerald {
+            box-shadow: 0 0 35px rgba(16, 185, 129, 0.2);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.92); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake-anim {
+            animation: shake 0.25s ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        .pulse-glow {
+            animation: pulseGlow 1.5s infinite ease-in-out;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0B0F19; }
+        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+
+    <!-- Mobile-First Portrait Header -->
+    <header class="border-b border-slate-800/80 bg-cardbg/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="returnToDashboard()">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-wide bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Math Blitz ⚡</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Cognitive Reflex Trainer</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="returnToDashboard()" id="navHomeBtn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
+                    Home
+                </button>
+                <button onclick="toggleAudio()" id="soundToggleBtn" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition text-slate-300" title="Toggle Sound">
+                    <svg id="soundIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-md w-full mx-auto px-4 py-5 flex flex-col justify-center">
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView" class="space-y-6 animate-pop">
+            <!-- Hero Card -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-emerald-950/50 via-cardbg to-cardbg border border-emerald-500/30 p-6 glow-emerald text-center space-y-3">
+                <span class="inline-block px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-[11px] font-bold tracking-widest uppercase">Speed Calculation & Logic</span>
+                <h2 class="text-2xl font-extrabold tracking-tight">Dimag Ki Tez Kसरत 🧠</h2>
+                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed px-2">Solve rapid mathematical equations, true/false logic statements, and number memory sequences before time runs out!</p>
+                <div class="pt-2">
+                    <button onclick="startGameMode('speed')" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/30 transition transform active:scale-95 flex items-center justify-center space-x-2">
+                        <span>🚀 Start Speed Blitz</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Modes Selection -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Choose Training Mode</h3>
+                
+                <!-- Mode 1: Speed Math -->
+                <div onclick="startGameMode('speed')" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-emerald-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">Speed Math Blitz</h4>
+                            <p class="text-[11px] text-slate-400">Fast arithmetic calculations</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestSpeedScore" class="text-xs font-bold font-mono text-emerald-400">0 pts</span>
+                        <div class="text-[10px] text-slate-500">High Score</div>
+                    </div>
+                </div>
+
+                <!-- Mode 2: True/False Equation Logic -->
+                <div onclick="startGameMode('logic')" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-teal-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">True / False Logic</h4>
+                            <p class="text-[11px] text-slate-400">Is this math equation correct?</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestLogicScore" class="text-xs font-bold font-mono text-teal-400">0 pts</span>
+                        <div class="text-[10px] text-slate-500">High Score</div>
+                    </div>
+                </div>
+
+                <!-- Mode 3: Digits Memory Span -->
+                <div onclick="startGameMode('memory')" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-cyan-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">Number Span Memory</h4>
+                            <p class="text-[11px] text-slate-400">Remember & recall digit sequences</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestMemoryScore" class="text-xs font-bold font-mono text-cyan-400">Lv 0</span>
+                        <div class="text-[10px] text-slate-500">Max Span</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ACTIVE GAMEPLAY VIEW (Shared Header for Speed & Logic) -->
+        <div id="gameplayView" class="hidden space-y-4 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg px-4 py-3 rounded-xl border border-slate-800">
+                <button onclick="returnToDashboard()" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Quit</span>
+                </button>
+                <div class="text-center">
+                    <h3 id="activeGameTitle" class="font-bold text-xs uppercase tracking-wider text-slate-400">Speed Math</h3>
+                </div>
+                <div class="flex space-x-2 font-mono text-xs font-bold">
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-amber-400" id="gameTimer">30s</div>
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-emerald-400" id="gameScore">0</div>
+                </div>
+            </div>
+
+            <!-- Timer Progress Bar -->
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="timerBar" class="bg-emerald-500 h-full w-full transition-all duration-1000"></div>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="bg-cardbg rounded-2xl border border-slate-800 p-6 text-center space-y-6 shadow-xl">
+                <div class="h-28 flex items-center justify-center bg-slate-900/60 rounded-xl border border-slate-800/80">
+                    <div id="questionBox" class="text-3xl sm:text-4xl font-black tracking-wider text-slate-100">
+                        12 + 8 = ?
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Grid (For Speed Math) -->
+                <div id="mathOptionsGrid" class="grid grid-cols-2 gap-3 pt-2">
+                    <!-- Buttons inserted dynamically -->
+                </div>
+
+                <!-- True / False Buttons (For Logic Mode) -->
+                <div id="logicButtonsGrid" class="grid grid-cols-2 gap-3 pt-2 hidden">
+                    <button onclick="answerLogic(true)" class="py-4 bg-emerald-600/20 hover:bg-emerald-600/30 active:scale-95 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl transition text-sm flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>CORRECT (TRUE)</span>
+                    </button>
+                    <button onclick="answerLogic(false)" class="py-4 bg-rose-600/20 hover:bg-rose-600/30 active:scale-95 border border-rose-500/50 text-rose-300 font-bold rounded-xl transition text-sm flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span>INCORRECT (FALSE)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- NUMBER SPAN MEMORY VIEW -->
+        <div id="memoryView" class="hidden space-y-4 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg px-4 py-3 rounded-xl border border-slate-800">
+                <button onclick="returnToDashboard()" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Quit</span>
+                </button>
+                <div class="text-center">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">Number Memory Span</h3>
+                </div>
+                <div class="flex space-x-2 font-mono text-xs font-bold">
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-cyan-400" id="memoryLevelIndicator">Span: 3</div>
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-rose-400" id="memoryLivesIndicator">❤️ 3</div>
+                </div>
+            </div>
+
+            <div id="memoryStatusBanner" class="bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-3 text-center text-xs font-semibold text-cyan-300">
+                Memorize the number sequence!
+            </div>
+
+            <!-- Display / Input Card -->
+            <div class="bg-cardbg rounded-2xl border border-slate-800 p-6 text-center space-y-6 shadow-xl">
+                <div class="h-28 flex items-center justify-center bg-slate-900/70 rounded-xl border border-slate-800/80">
+                    <div id="memoryDisplayBox" class="text-4xl sm:text-5xl font-black tracking-widest font-mono text-cyan-300">
+                        7 4 2
+                    </div>
+                </div>
+
+                <!-- Number Input Pad -->
+                <div id="memoryInputArea" class="hidden space-y-3">
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 min-h-[44px] flex items-center justify-center">
+                        <span id="memoryUserTyped" class="text-2xl font-mono tracking-widest text-emerald-400">_</span>
+                    </div>
+
+                    <!-- Keypad grid -->
+                    <div class="grid grid-cols-3 gap-2 pt-1">
+                        <button onclick="pressMemoryKey('1')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">1</button>
+                        <button onclick="pressMemoryKey('2')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">2</button>
+                        <button onclick="pressMemoryKey('3')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">3</button>
+                        <button onclick="pressMemoryKey('4')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">4</button>
+                        <button onclick="pressMemoryKey('5')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">5</button>
+                        <button onclick="pressMemoryKey('6')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">6</button>
+                        <button onclick="pressMemoryKey('7')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">7</button>
+                        <button onclick="pressMemoryKey('8')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">8</button>
+                        <button onclick="pressMemoryKey('9')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">9</button>
+                        <button onclick="clearMemoryInput()" class="py-3.5 bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 rounded-xl font-bold text-xs transition">CLEAR</button>
+                        <button onclick="pressMemoryKey('0')" class="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-cyan-600 rounded-xl font-bold font-mono text-lg transition">0</button>
+                        <button onclick="submitMemoryAnswer()" class="py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition shadow-lg shadow-emerald-600/30">SUBMIT</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- RESULTS MODAL -->
+        <div id="resultsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+            <div class="bg-cardbg border border-slate-700/80 rounded-2xl max-w-xs w-full p-6 text-center space-y-5 shadow-2xl">
+                <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    🏆
+                </div>
+                <div>
+                    <h3 id="modalTitle" class="text-xl font-extrabold mb-1">Session Complete!</h3>
+                    <p id="modalSubtitle" class="text-xs text-slate-400">Cognitive performance recorded.</p>
+                </div>
+                <div class="bg-slate-900/90 rounded-xl p-3.5 space-y-2.5 text-left">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400" id="stat1Label">Score:</span>
+                        <span class="font-bold text-emerald-400 font-mono text-sm" id="stat1Value">24 pts</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-slate-800/80 pt-2">
+                        <span class="text-slate-400" id="stat2Label">Rating:</span>
+                        <span class="font-bold text-teal-400 text-right" id="stat2Value">⚡ Lightning Fast</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2.5 pt-1">
+                    <button onclick="returnToDashboard()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-semibold text-xs transition">Home</button>
+                    <button onclick="retryCurrentGame()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-semibold text-xs shadow-lg shadow-emerald-600/30 transition">Play Again</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-cardbg/40 text-center py-3 text-[10px] text-slate-500">
+        <p>Math Speed Blitz • Portrait Mobile Edition</p>
+    </footer>
+
+    <!-- JavaScript Game Logic -->
+    <script>
+        /* --- Web Audio Synthesizer --- */
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(700, now + 0.05);
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(587.33, now); // D5
+                    osc.frequency.setValueAtTime(880, now + 0.08); // A5
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.18);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        const nOsc = audioCtx.createOscillator();
+                        const nGain = audioCtx.createGain();
+                        nOsc.connect(nGain);
+                        nGain.connect(audioCtx.destination);
+                        nOsc.frequency.setValueAtTime(freq, now + i * 0.07);
+                        nGain.gain.setValueAtTime(0.08, now + i * 0.07);
+                        nGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.15);
+                        nOsc.start(now + i * 0.07);
+                        nOsc.stop(now + i * 0.07 + 0.15);
+                    });
+                }
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>';
+                playSound('click');
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>';
+            }
+        }
+
+
+        /* --- State & High Scores --- */
+        let currentGameMode = null;
+        let highScores = JSON.parse(localStorage.getItem('mathBlitzScores')) || {
+            speed: 0,
+            logic: 0,
+            memory: 0
+        };
+
+        function updateDashboardScores() {
+            document.getElementById('bestSpeedScore').innerText = highScores.speed + ' pts';
+            document.getElementById('bestLogicScore').innerText = highScores.logic + ' pts';
+            document.getElementById('bestMemoryScore').innerText = 'Lv ' + highScores.memory;
+        }
+
+        function returnToDashboard() {
+            stopAllTimers();
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('gameplayView').classList.add('hidden');
+            document.getElementById('memoryView').classList.add('hidden');
+            document.getElementById('resultsModal').classList.add('hidden');
+            document.getElementById('navHomeBtn').classList.add('hidden');
+            updateDashboardScores();
+            currentGameMode = null;
+            playSound('click');
+        }
+
+        function retryCurrentGame() {
+            document.getElementById('resultsModal').classList.add('hidden');
+            startGameMode(currentGameMode);
+        }
+
+        function showModal(title, subtitle, statLabel, statVal, ratingLabel, ratingVal) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalSubtitle').innerText = subtitle;
+            document.getElementById('stat1Label').innerText = statLabel;
+            document.getElementById('stat1Value').innerText = statVal;
+            document.getElementById('stat2Label').innerText = ratingLabel;
+            document.getElementById('stat2Value').innerText = ratingVal;
+            document.getElementById('resultsModal').classList.remove('hidden');
+        }
+
+        let activeTimers = [];
+        function stopAllTimers() {
+            activeTimers.forEach(t => clearInterval(t));
+            activeTimers = [];
+            clearTimeout(window.memoryDisplayTimer);
+        }
+
+        function startGameMode(mode) {
+            currentGameMode = mode;
+            stopAllTimers();
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('resultsModal').classList.add('hidden');
+            document.getElementById('navHomeBtn').classList.remove('hidden');
+            playSound('click');
+
+            if (mode === 'speed') {
+                document.getElementById('gameplayView').classList.remove('hidden');
+                document.getElementById('mathOptionsGrid').classList.remove('hidden');
+                document.getElementById('logicButtonsGrid').classList.add('hidden');
+                document.getElementById('activeGameTitle').innerText = 'Speed Math Blitz';
+                initSpeedMathGame();
+            } else if (mode === 'logic') {
+                document.getElementById('gameplayView').classList.remove('hidden');
+                document.getElementById('mathOptionsGrid').classList.add('hidden');
+                document.getElementById('logicButtonsGrid').classList.remove('hidden');
+                document.getElementById('activeGameTitle').innerText = 'True / False Logic';
+                initLogicGame();
+            } else if (mode === 'memory') {
+                document.getElementById('memoryView').classList.remove('hidden');
+                initMemoryGame();
+            }
+        }
+
+
+        /* ================= MODE 1: SPEED MATH BLITZ ================= */
+        let speedScore = 0;
+        let speedTimeLeft = 30;
+        let currentSpeedAnswer = 0;
+
+        function initSpeedMathGame() {
+            speedScore = 0;
+            speedTimeLeft = 30;
+            document.getElementById('gameScore').innerText = '0';
+            document.getElementById('gameTimer').innerText = '30s';
+            document.getElementById('timerBar').style.width = '100%';
+
+            nextSpeedQuestion();
+
+            let timerInt = setInterval(() => {
+                speedTimeLeft--;
+                document.getElementById('gameTimer').innerText = speedTimeLeft + 's';
+                document.getElementById('timerBar').style.width = `${(speedTimeLeft / 30) * 100}%`;
+
+                if (speedTimeLeft <= 0) {
+                    clearInterval(timerInt);
+                    playSound('win');
+                    if (speedScore > highScores.speed) {
+                        highScores.speed = speedScore;
+                        localStorage.setItem('mathBlitzScores', JSON.stringify(highScores));
+                    }
+                    let rating = speedScore >= 20 ? '🔥 Math Wizard!' : '💡 Great Arithmetic!';
+                    showModal('Speed Math Over!', 'Fast calculation session ended.', 'Final Score:', speedScore + ' pts', 'Rating:', rating);
+                }
+            }, 1000);
+            activeTimers.push(timerInt);
+        }
+
+        function nextSpeedQuestion() {
+            const ops = ['+', '-', '*'];
+            const op = ops[Math.floor(Math.random() * ops.length)];
+            let num1, num2;
+
+            if (op === '+') {
+                num1 = Math.floor(Math.random() * 45) + 5;
+                num2 = Math.floor(Math.random() * 45) + 5;
+                currentSpeedAnswer = num1 + num2;
+            } else if (op === '-') {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * num1) + 1; // ensure positive
+                currentSpeedAnswer = num1 - num2;
+            } else {
+                num1 = Math.floor(Math.random() * 12) + 2;
+                num2 = Math.floor(Math.random() * 10) + 2;
+                currentSpeedAnswer = num1 * num2;
+            }
+
+            document.getElementById('questionBox').innerText = `${num1} ${op} ${num2} = ?`;
+
+            // Generate 4 options (1 correct, 3 distractors)
+            let options = [currentSpeedAnswer];
+            while (options.length < 4) {
+                let offset = (Math.floor(Math.random() * 8) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                let fake = currentSpeedAnswer + offset;
+                if (fake >= 0 && !options.includes(fake)) {
+                    options.push(fake);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('mathOptionsGrid');
+            grid.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'py-4 bg-slate-800/90 hover:bg-slate-700 active:bg-emerald-600 rounded-xl font-bold font-mono text-xl transition border border-slate-700/60 shadow';
+                btn.innerText = opt;
+                btn.onclick = () => answerSpeedMath(opt);
+                grid.appendChild(btn);
+            });
+        }
+
+        function answerSpeedMath(selectedVal) {
+            if (speedTimeLeft <= 0) return;
+
+            if (selectedVal === currentSpeedAnswer) {
+                playSound('success');
+                speedScore++;
+                document.getElementById('gameScore').innerText = speedScore;
+            } else {
+                playSound('fail');
+                speedScore = Math.max(0, speedScore - 1);
+                document.getElementById('gameScore').innerText = speedScore;
+                document.getElementById('questionBox').classList.add('shake-anim');
+                setTimeout(() => document.getElementById('questionBox').classList.remove('shake-anim'), 300);
+            }
+            nextSpeedQuestion();
+        }
+
+
+        /* ================= MODE 2: TRUE / FALSE LOGIC ================= */
+        let logicScore = 0;
+        let logicTimeLeft = 30;
+        let currentLogicIsCorrect = true;
+
+        function initLogicGame() {
+            logicScore = 0;
+            logicTimeLeft = 30;
+            document.getElementById('gameScore').innerText = '0';
+            document.getElementById('gameTimer').innerText = '30s';
+            document.getElementById('timerBar').style.width = '100%';
+
+            nextLogicQuestion();
+
+            let timerInt = setInterval(() => {
+                logicTimeLeft--;
+                document.getElementById('gameTimer').innerText = logicTimeLeft + 's';
+                document.getElementById('timerBar').style.width = `${(logicTimeLeft / 30) * 100}%`;
+
+                if (logicTimeLeft <= 0) {
+                    clearInterval(timerInt);
+                    playSound('win');
+                    if (logicScore > highScores.logic) {
+                        highScores.logic = logicScore;
+                        localStorage.setItem('mathBlitzScores', JSON.stringify(highScores));
+                    }
+                    let rating = logicScore >= 18 ? '⚡ Razor Sharp Logic!' : '💡 Good Focus!';
+                    showModal('Logic Test Over!', 'Equation evaluation session ended.', 'Final Score:', logicScore + ' pts', 'Rating:', rating);
+                }
+            }, 1000);
+            activeTimers.push(timerInt);
+        }
+
+        function nextLogicQuestion() {
+            let n1 = Math.floor(Math.random() * 30) + 5;
+            let n2 = Math.floor(Math.random() * 30) + 5;
+            let realAns = n1 + n2;
+
+            currentLogicIsCorrect = Math.random() < 0.5;
+            let displayedAns = currentLogicIsCorrect ? realAns : realAns + (Math.random() < 0.5 ? 2 : -3);
+            if (displayedAns < 0) displayedAns = realAns + 4;
+
+            if (displayedAns === realAns) currentLogicIsCorrect = true;
+            else currentLogicIsCorrect = false;
+
+            document.getElementById('questionBox').innerText = `${n1} + ${n2} = ${displayedAns}`;
+        }
+
+        function answerLogic(userSaysTrue) {
+            if (logicTimeLeft <= 0) return;
+
+            if (userSaysTrue === currentLogicIsCorrect) {
+                playSound('success');
+                logicScore++;
+                document.getElementById('gameScore').innerText = logicScore;
+            } else {
+                playSound('fail');
+                logicScore = Math.max(0, logicScore - 1);
+                document.getElementById('gameScore').innerText = logicScore;
+                document.getElementById('questionBox').classList.add('shake-anim');
+                setTimeout(() => document.getElementById('questionBox').classList.remove('shake-anim'), 300);
+            }
+            nextLogicQuestion();
+        }
+
+
+        /* ================= MODE 3: NUMBER MEMORY SPAN ================= */
+        let memorySpanLevel = 3;
+        let memoryLives = 3;
+        let currentSequence = [];
+        let userMemoryInput = '';
+
+        function initMemoryGame() {
+            memorySpanLevel = 3;
+            memoryLives = 3;
+            setupMemoryRound();
+        }
+
+        function setupMemoryRound() {
+            document.getElementById('memoryLevelIndicator').innerText = `Span: ${memorySpanLevel}`;
+            document.getElementById('memoryLivesIndicator').innerText = `❤️ ${memoryLives}`;
+            document.getElementById('memoryStatusBanner').innerText = 'Memorize the number sequence!';
+            document.getElementById('memoryStatusBanner').className = 'bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-3 text-center text-xs font-semibold text-cyan-300';
+
+            document.getElementById('memoryInputArea').classList.add('hidden');
+            const displayBox = document.getElementById('memoryDisplayBox');
+
+            currentSequence = [];
+            for (let i = 0; i < memorySpanLevel; i++) {
+                currentSequence.push(Math.floor(Math.random() * 10));
+            }
+
+            displayBox.innerText = currentSequence.join(' ');
+
+            let displayDuration = Math.max(1200, memorySpanLevel * 600);
+            window.memoryDisplayTimer = setTimeout(() => {
+                displayBox.innerText = '••••••';
+                document.getElementById('memoryStatusBanner').innerText = 'Enter the sequence from memory:';
+                document.getElementById('memoryStatusBanner').className = 'bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-3 text-center text-xs font-semibold text-emerald-300';
+                document.getElementById('memoryInputArea').classList.remove('hidden');
+                userMemoryInput = '';
+                document.getElementById('memoryUserTyped').innerText = '_';
+            }, displayDuration);
+            activeTimers.push(window.memoryDisplayTimer);
+        }
+
+        function pressMemoryKey(digit) {
+            playSound('click');
+            if (userMemoryInput.length < currentSequence.length) {
+                userMemoryInput += digit;
+                document.getElementById('memoryUserTyped').innerText = userMemoryInput.split('').join(' ');
+            }
+        }
+
+        function clearMemoryInput() {
+            playSound('click');
+            userMemoryInput = '';
+            document.getElementById('memoryUserTyped').innerText = '_';
+        }
+
+        function submitMemoryAnswer() {
+            if (userMemoryInput.length !== currentSequence.length) return;
+
+            let targetStr = currentSequence.join('');
+            if (userMemoryInput === targetStr) {
+                playSound('success');
+                memorySpanLevel++;
+
+                if (memorySpanLevel - 1 > highScores.memory) {
+                    highScores.memory = memorySpanLevel - 1;
+                    localStorage.setItem('mathBlitzScores', JSON.stringify(highScores));
+                }
+
+                document.getElementById('memoryStatusBanner').innerText = '✨ Correct! Level Up!';
+                document.getElementById('memoryInputArea').classList.add('hidden');
+                document.getElementById('memoryDisplayBox').innerText = 'CORRECT ✓';
+
+                setTimeout(() => {
+                    setupMemoryRound();
+                }, 1000);
+            } else {
+                playSound('fail');
+                memoryLives--;
+                document.getElementById('memoryLivesIndicator').innerText = `❤️ ${memoryLives}`;
+
+                if (memoryLives <= 0) {
+                    if (memorySpanLevel - 1 > highScores.memory) {
+                        highScores.memory = memorySpanLevel - 1;
+                        localStorage.setItem('mathBlitzScores', JSON.stringify(highScores));
+                    }
+                    showModal('Memory Test Over!', 'Digit span session finished.', 'Max Memory Span:', `Level ${memorySpanLevel}`, 'Rating:', memorySpanLevel > 5 ? '🧠 Elephant Memory!' : '💡 Good Effort!');
+                } else {
+                    document.getElementById('memoryStatusBanner').innerText = `❌ Wrong! Correct was: ${targetStr}`;
+                    document.getElementById('memoryDisplayBox').innerText = targetStr;
+                    document.getElementById('memoryInputArea').classList.add('hidden');
+
+                    setTimeout(() => {
+                        setupMemoryRound();
+                    }, 2000);
+                }
+            }
+        }
+
+        // Initialize on window load
+        window.onload = function() {
+            updateDashboardScores();
+        };
+    </script>
+</body>
+</html>

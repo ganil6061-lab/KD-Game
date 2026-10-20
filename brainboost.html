@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BrainBoost Gym - Mobile Portrait Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#090D16',
+                        cardbg: '#161F30',
+                        accent: '#6366F1',
+                        accenthover: '#4F46E5',
+                        success: '#10B981',
+                        danger: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .glow-effect {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake-anim {
+            animation: shake 0.3s ease-in-out;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #090D16; }
+        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col justify-between selection:bg-accent selection:text-white overflow-x-hidden">
+
+    <!-- Mobile-First Portrait Header -->
+    <header class="border-b border-slate-800/80 bg-cardbg/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchView('dashboard')">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">BrainBoost</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Portrait Edition 📱</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="switchView('dashboard')" id="navDashboardBtn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
+                    Dashboard
+                </button>
+                <button onclick="toggleAudio()" id="soundToggleBtn" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition text-slate-300" title="Toggle Sound">
+                    <svg id="soundIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container (Portrait Optimized Width) -->
+    <main class="flex-grow max-w-md w-full mx-auto px-4 py-5 flex flex-col justify-center">
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView" class="space-y-6 animate-pop">
+            <!-- Hero Card -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-indigo-950/60 via-cardbg to-cardbg border border-indigo-500/30 p-6 glow-effect text-center space-y-3">
+                <span class="inline-block px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-[11px] font-bold tracking-widest uppercase">Grid Memory & Reflex Trainer</span>
+                <h2 class="text-2xl font-extrabold tracking-tight">Dimag Ko Tez Banao 🧠</h2>
+                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed px-2">Master the Schulte Table in portrait mode with progressive grid sizes (3x3, 4x4, 5x5) designed for mobile touchscreens.</p>
+                <div class="pt-2">
+                    <button onclick="openSchulteSelector()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30 transition transform active:scale-95">
+                        ⚡ Play Schulte Grid
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Modes Menu -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Training Modes</h3>
+                
+                <!-- Schulte Table Card -->
+                <div onclick="openSchulteSelector()" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-indigo-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">Grid Memory (Schulte)</h4>
+                            <p class="text-[11px] text-slate-400">Tap numbers 1 to N ascending</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestSchulteSummary" class="text-xs font-bold font-mono text-indigo-400">--s</span>
+                        <div class="text-[10px] text-slate-500">Best Record</div>
+                    </div>
+                </div>
+
+                <!-- Stroop Test Card -->
+                <div onclick="startStroopGame()" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-purple-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 73.5l2-2m2 2l2-2"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">Color-Word Stroop</h4>
+                            <p class="text-[11px] text-slate-400">Rapid ink & text match test</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestStroopSummary" class="text-xs font-bold font-mono text-purple-400">0 pts</span>
+                        <div class="text-[10px] text-slate-500">High Score</div>
+                    </div>
+                </div>
+
+                <!-- Memory Matrix Card -->
+                <div onclick="startMatrixGame()" class="bg-cardbg rounded-2xl border border-slate-800 p-4 flex items-center justify-between hover:border-emerald-500/50 transition cursor-pointer active:scale-98">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-200">Memory Matrix</h4>
+                            <p class="text-[11px] text-slate-400">Recall highlighted tile sequences</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span id="bestMatrixSummary" class="text-xs font-bold font-mono text-emerald-400">Lv 0</span>
+                        <div class="text-[10px] text-slate-500">Max Level</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- SCHULTE TABLE GRID SIZE SELECTOR MODAL / VIEW -->
+        <div id="schulteSelectorView" class="hidden space-y-6 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg p-3.5 rounded-xl border border-slate-800">
+                <button onclick="switchView('dashboard')" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Back</span>
+                </button>
+                <h3 class="font-bold text-sm">Select Grid Size</h3>
+                <div class="w-12"></div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <button onclick="startSchulteGame(3)" class="w-full p-4 bg-cardbg hover:bg-slate-800 border border-slate-800 hover:border-blue-500/50 rounded-2xl flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 font-bold flex items-center justify-center text-sm">3x3</div>
+                        <div class="text-left">
+                            <div class="font-bold text-sm">Easy Grid (1 to 9)</div>
+                            <div class="text-[11px] text-slate-400">Great for warm-up & kids</div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-blue-400" id="bestSchulte3">--s</span>
+                </button>
+
+                <button onclick="startSchulteGame(4)" class="w-full p-4 bg-cardbg hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 rounded-2xl flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 font-bold flex items-center justify-center text-sm">4x4</div>
+                        <div class="text-left">
+                            <div class="font-bold text-sm">Medium Grid (1 to 16)</div>
+                            <div class="text-[11px] text-slate-400">Standard mobile focus test</div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-indigo-400" id="bestSchulte4">--s</span>
+                </button>
+
+                <button onclick="startSchulteGame(5)" class="w-full p-4 bg-cardbg hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 rounded-2xl flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 font-bold flex items-center justify-center text-sm">5x5</div>
+                        <div class="text-left">
+                            <div class="font-bold text-sm">Pro Grid (1 to 25)</div>
+                            <div class="text-[11px] text-slate-400">Maximum peripheral vision test</div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-purple-400" id="bestSchulte5">--s</span>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- GAME 1: SCHULTE TABLE ACTIVE GAME VIEW -->
+        <div id="schulteView" class="hidden space-y-4 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg px-4 py-3 rounded-xl border border-slate-800">
+                <button onclick="openSchulteSelector()" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Sizes</span>
+                </button>
+                <div class="text-center">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400" id="schulteGridTitle">Schulte 4x4</h3>
+                </div>
+                <div class="bg-slate-900 px-3 py-1 rounded-lg text-xs font-mono font-bold text-indigo-400" id="schulteTimer">0.0s</div>
+            </div>
+
+            <!-- Target Banner -->
+            <div class="bg-indigo-950/50 border border-indigo-500/30 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <span class="text-xs text-slate-300 font-medium">Find & Tap Next:</span>
+                <span id="schulteNextTarget" class="text-xl font-black text-indigo-400 font-mono">1</span>
+            </div>
+
+            <!-- Dynamic Responsive Grid Container (Portrait optimized square) -->
+            <div id="schulteGridContainer" class="bg-cardbg p-3.5 rounded-2xl border border-slate-800 aspect-square shadow-2xl flex items-center justify-center">
+                <div id="schulteGrid" class="grid gap-2.5 w-full h-full">
+                    <!-- Dynamic grid items inserted via JS -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- GAME 2: STROOP TEST VIEW -->
+        <div id="stroopView" class="hidden space-y-4 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg px-4 py-3 rounded-xl border border-slate-800">
+                <button onclick="switchView('dashboard')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Back</span>
+                </button>
+                <div class="text-center">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">Stroop Test</h3>
+                </div>
+                <div class="flex space-x-1.5 font-mono text-xs font-bold">
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-purple-400" id="stroopTimer">30s</div>
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-emerald-400" id="stroopScore">0</div>
+                </div>
+            </div>
+
+            <!-- Card Display -->
+            <div class="bg-cardbg rounded-2xl border border-slate-800 p-6 text-center space-y-6 shadow-xl">
+                <div class="h-36 flex items-center justify-center bg-slate-900/50 rounded-xl border border-slate-800/80">
+                    <div id="stroopWordBox" class="text-4xl sm:text-5xl font-black uppercase tracking-wider transition transform scale-100">
+                        RED
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 px-2">Does the ink color match the word meaning? Fast reflexes required!</p>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="answerStroop(true)" class="py-4 bg-emerald-600/20 hover:bg-emerald-600/30 active:scale-95 border border-emerald-500/50 text-emerald-300 font-bold rounded-xl transition text-sm flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>YES (Match)</span>
+                    </button>
+                    <button onclick="answerStroop(false)" class="py-4 bg-rose-600/20 hover:bg-rose-600/30 active:scale-95 border border-rose-500/50 text-rose-300 font-bold rounded-xl transition text-sm flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <span>NO (Diff)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- GAME 3: MEMORY MATRIX VIEW -->
+        <div id="matrixView" class="hidden space-y-4 animate-pop">
+            <div class="flex items-center justify-between bg-cardbg px-4 py-3 rounded-xl border border-slate-800">
+                <button onclick="switchView('dashboard')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition font-medium flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Back</span>
+                </button>
+                <div class="text-center">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">Memory Matrix</h3>
+                </div>
+                <div class="flex space-x-1.5 font-mono text-xs font-bold">
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-emerald-400" id="matrixLevelIndicator">Lv 1</div>
+                    <div class="bg-slate-900 px-2.5 py-1 rounded-lg text-amber-400" id="matrixLivesIndicator">❤️ 3</div>
+                </div>
+            </div>
+
+            <div id="matrixStatusBanner" class="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-semibold text-emerald-300">
+                Memorize the highlighted tiles!
+            </div>
+
+            <!-- Matrix Grid Container -->
+            <div class="bg-cardbg p-4 rounded-2xl border border-slate-800 aspect-square flex items-center justify-center shadow-xl">
+                <div id="matrixGrid" class="grid gap-2 w-full h-full">
+                    <!-- Dynamically generated tiles -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- RESULTS MODAL -->
+        <div id="resultsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-pop">
+            <div class="bg-cardbg border border-slate-700/80 rounded-2xl max-w-xs w-full p-6 text-center space-y-5 shadow-2xl">
+                <div class="w-14 h-14 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    🏆
+                </div>
+                <div>
+                    <h3 id="modalTitle" class="text-xl font-extrabold mb-1">Great Job!</h3>
+                    <p id="modalSubtitle" class="text-xs text-slate-400">Cognitive session recorded.</p>
+                </div>
+                <div class="bg-slate-900/90 rounded-xl p-3.5 space-y-2.5 text-left">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400" id="stat1Label">Score / Time:</span>
+                        <span class="font-bold text-indigo-400 font-mono text-sm" id="stat1Value">14.2s</span>
+                    </div>
+                    <div class="flex justify-between text-xs border-t border-slate-800/80 pt-2">
+                        <span class="text-slate-400" id="stat2Label">Performance:</span>
+                        <span class="font-bold text-emerald-400 text-right" id="stat2Value">⚡ Fast</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2.5 pt-1">
+                    <button onclick="switchView('dashboard')" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-semibold text-xs transition">Home</button>
+                    <button id="modalRetryBtn" onclick="retryCurrentGame()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-xs shadow-lg shadow-indigo-600/30 transition">Play Again</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-cardbg/40 text-center py-3 text-[10px] text-slate-500">
+        <p>BrainBoost Gym • Portrait Mobile Edition</p>
+    </footer>
+
+    <!-- JavaScript Game Logic -->
+    <script>
+        /* --- Web Audio Synthesizer --- */
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(650, now + 0.06);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.07);
+                    osc.frequency.setValueAtTime(783.99, now + 0.14);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        const nOsc = audioCtx.createOscillator();
+                        const nGain = audioCtx.createGain();
+                        nOsc.connect(nGain);
+                        nGain.connect(audioCtx.destination);
+                        nOsc.frequency.setValueAtTime(freq, now + i * 0.08);
+                        nGain.gain.setValueAtTime(0.1, now + i * 0.08);
+                        nGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.18);
+                        nOsc.start(now + i * 0.08);
+                        nOsc.stop(now + i * 0.08 + 0.18);
+                    });
+                }
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if (soundEnabled) {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>';
+                playSound('click');
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>';
+            }
+        }
+
+
+        /* --- State & LocalStorage Management --- */
+        let currentGame = null;
+        let currentSchulteSize = 4; // default 4x4
+        let highScores = JSON.parse(localStorage.getItem('brainBoostMobileScores')) || {
+            schulte3: null,
+            schulte4: null,
+            schulte5: null,
+            stroop: 0,
+            matrix: 0
+        };
+
+        function updateDashboardScores() {
+            document.getElementById('bestSchulteSummary').innerText = highScores.schulte4 ? highScores.schulte4.toFixed(1) + 's' : '--s';
+            document.getElementById('bestStroopSummary').innerText = highScores.stroop + ' pts';
+            document.getElementById('bestMatrixSummary').innerText = 'Lv ' + highScores.matrix;
+
+            document.getElementById('bestSchulte3').innerText = highScores.schulte3 ? highScores.schulte3.toFixed(1) + 's' : '--s';
+            document.getElementById('bestSchulte4').innerText = highScores.schulte4 ? highScores.schulte4.toFixed(1) + 's' : '--s';
+            document.getElementById('bestSchulte5').innerText = highScores.schulte5 ? highScores.schulte5.toFixed(1) + 's' : '--s';
+        }
+
+        function switchView(viewName) {
+            stopAllTimers();
+
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('schulteSelectorView').classList.add('hidden');
+            document.getElementById('schulteView').classList.add('hidden');
+            document.getElementById('stroopView').classList.add('hidden');
+            document.getElementById('matrixView').classList.add('hidden');
+            document.getElementById('resultsModal').classList.add('hidden');
+
+            const navBtn = document.getElementById('navDashboardBtn');
+            if (viewName === 'dashboard') {
+                document.getElementById('dashboardView').classList.remove('hidden');
+                navBtn.classList.add('hidden');
+                updateDashboardScores();
+                currentGame = null;
+            } else {
+                navBtn.classList.remove('hidden');
+                if (viewName === 'schulteSelector') {
+                    document.getElementById('schulteSelectorView').classList.remove('hidden');
+                    currentGame = 'schulteSelector';
+                } else if (viewName === 'schulte') {
+                    document.getElementById('schulteView').classList.remove('hidden');
+                    currentGame = 'schulte';
+                } else if (viewName === 'stroop') {
+                    document.getElementById('stroopView').classList.remove('hidden');
+                    currentGame = 'stroop';
+                } else if (viewName === 'matrix') {
+                    document.getElementById('matrixView').classList.remove('hidden');
+                    currentGame = 'matrix';
+                }
+            }
+            playSound('click');
+        }
+
+        function openSchulteSelector() {
+            switchView('schulteSelector');
+        }
+
+        function retryCurrentGame() {
+            document.getElementById('resultsModal').classList.add('hidden');
+            if (currentGame === 'schulte') startSchulteGame(currentSchulteSize);
+            else if (currentGame === 'stroop') startStroopGame();
+            else if (currentGame === 'matrix') startMatrixGame();
+        }
+
+        function showModal(title, subtitle, stat1Label, stat1Val, stat2Label, stat2Val) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalSubtitle').innerText = subtitle;
+            document.getElementById('stat1Label').innerText = stat1Label;
+            document.getElementById('stat1Value').innerText = stat1Val;
+            document.getElementById('stat2Label').innerText = stat2Label;
+            document.getElementById('stat2Value').innerText = stat2Val;
+            document.getElementById('resultsModal').classList.remove('hidden');
+        }
+
+        let activeTimers = [];
+        function stopAllTimers() {
+            activeTimers.forEach(t => clearInterval(t));
+            activeTimers = [];
+            clearTimeout(window.matrixTimer);
+            clearTimeout(window.matrixNextTimer);
+        }
+
+
+        /* ================= GAME 1: SCHULTE TABLE (3x3, 4x4, 5x5) ================= */
+        let schulteCurrentNum = 1;
+        let schulteMaxNum = 16;
+        let schulteStartTime = 0;
+        let schulteTimerInterval = null;
+
+        function startSchulteGame(size = 4) {
+            currentSchulteSize = size;
+            switchView('schulte');
+            schulteCurrentNum = 1;
+            schulteMaxNum = size * size;
+
+            document.getElementById('schulteGridTitle').innerText = `Schulte ${size}x${size}`;
+            document.getElementById('schulteNextTarget').innerText = schulteCurrentNum;
+            document.getElementById('schulteTimer').innerText = '0.0s';
+
+            let numbers = Array.from({length: schulteMaxNum}, (_, i) => i + 1);
+            numbers.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('schulteGrid');
+            grid.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+            grid.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
+            grid.innerHTML = '';
+
+            // Dynamic font scaling based on grid size
+            let textSize = size === 3 ? 'text-2xl sm:text-3xl' : size === 4 ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl';
+
+            numbers.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = `bg-slate-800/90 hover:bg-slate-700 active:bg-indigo-600 rounded-xl font-bold ${textSize} flex items-center justify-center transition select-none border border-slate-700/60 shadow`;
+                btn.innerText = num;
+                btn.onclick = () => handleSchulteClick(num, btn);
+                grid.appendChild(btn);
+            });
+
+            schulteStartTime = Date.now();
+            schulteTimerInterval = setInterval(() => {
+                let elapsed = ((Date.now() - schulteStartTime) / 1000).toFixed(1);
+                document.getElementById('schulteTimer').innerText = elapsed + 's';
+            }, 100);
+            activeTimers.push(schulteTimerInterval);
+        }
+
+        function handleSchulteClick(num, btnElement) {
+            if (num === schulteCurrentNum) {
+                playSound('click');
+                btnElement.classList.remove('bg-slate-800/90', 'hover:bg-slate-700', 'border-slate-700/60');
+                btnElement.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500', 'shadow-indigo-500/40');
+                
+                schulteCurrentNum++;
+                if (schulteCurrentNum > schulteMaxNum) {
+                    clearInterval(schulteTimerInterval);
+                    let totalTime = (Date.now() - schulteStartTime) / 1000;
+                    playSound('win');
+
+                    let key = 'schulte' + currentSchulteSize;
+                    if (!highScores[key] || totalTime < highScores[key]) {
+                        highScores[key] = totalTime;
+                        localStorage.setItem('brainBoostMobileScores', JSON.stringify(highScores));
+                    }
+
+                    let rating = totalTime < (currentSchulteSize === 3 ? 5 : currentSchulteSize === 4 ? 12 : 22) ? '⚡ Lightning Fast 🚀' : '🎯 Great Focus 👍';
+                    showModal(`Schulte ${currentSchulteSize}x${size = currentSchulteSize} Completed!`, 'Visual scanning drill finished.', 'Total Time:', totalTime.toFixed(1) + 's', 'Performance:', rating);
+                } else {
+                    document.getElementById('schulteNextTarget').innerText = schulteCurrentNum;
+                }
+            } else {
+                playSound('fail');
+                btnElement.classList.add('shake-anim', 'bg-rose-950/60', 'border-rose-500');
+                setTimeout(() => {
+                    btnElement.classList.remove('shake-anim', 'bg-rose-950/60', 'border-rose-500');
+                }, 300);
+            }
+        }
+
+
+        /* ================= GAME 2: STROOP TEST ================= */
+        let stroopScore = 0;
+        let stroopTimeLeft = 30;
+        let stroopTimerInterval = null;
+        let currentStroopData = { text: '', color: '', isMatch: true };
+
+        const stroopColors = [
+            { name: 'RED', hex: '#EF4444' },
+            { name: 'BLUE', hex: '#3B82F6' },
+            { name: 'GREEN', hex: '#10B981' },
+            { name: 'YELLOW', hex: '#F59E0B' },
+            { name: 'PURPLE', hex: '#8B5CF6' }
+        ];
+
+        function startStroopGame() {
+            switchView('stroop');
+            stroopScore = 0;
+            stroopTimeLeft = 30;
+            document.getElementById('stroopScore').innerText = '0';
+            document.getElementById('stroopTimer').innerText = '30s';
+
+            nextStroopQuestion();
+
+            stroopTimerInterval = setInterval(() => {
+                stroopTimeLeft--;
+                document.getElementById('stroopTimer').innerText = stroopTimeLeft + 's';
+                if (stroopTimeLeft <= 0) {
+                    clearInterval(stroopTimerInterval);
+                    playSound('win');
+
+                    if (stroopScore > highScores.stroop) {
+                        highScores.stroop = stroopScore;
+                        localStorage.setItem('brainBoostMobileScores', JSON.stringify(highScores));
+                    }
+
+                    let rating = stroopScore >= 18 ? '🔥 Cognitive Genius!' : '💡 Good Flexibility!';
+                    showModal('Stroop Test Over!', 'Color-word agility session finished.', 'Final Score:', stroopScore + ' pts', 'Rating:', rating);
+                }
+            }, 1000);
+            activeTimers.push(stroopTimerInterval);
+        }
+
+        function nextStroopQuestion() {
+            const randomTextObj = stroopColors[Math.floor(Math.random() * stroopColors.length)];
+            const randomColorObj = stroopColors[Math.floor(Math.random() * stroopColors.length)];
+            const isMatch = Math.random() < 0.5;
+            const finalColor = isMatch ? randomTextObj : randomColorObj;
+
+            currentStroopData = {
+                text: randomTextObj.name,
+                color: finalColor.hex,
+                isMatch: randomTextObj.name === finalColor.name
+            };
+
+            const wordBox = document.getElementById('stroopWordBox');
+            wordBox.innerText = currentStroopData.text;
+            wordBox.style.color = currentStroopData.color;
+        }
+
+        function answerStroop(userChoice) {
+            if (stroopTimeLeft <= 0) return;
+
+            if (userChoice === currentStroopData.isMatch) {
+                playSound('success');
+                stroopScore++;
+                document.getElementById('stroopScore').innerText = stroopScore;
+            } else {
+                playSound('fail');
+                stroopScore = Math.max(0, stroopScore - 1);
+                document.getElementById('stroopScore').innerText = stroopScore;
+            }
+            nextStroopQuestion();
+        }
+
+
+        /* ================= GAME 3: MEMORY MATRIX ================= */
+        let matrixLevel = 1;
+        let matrixLives = 3;
+        let matrixSize = 3;
+        let matrixTargetCount = 3;
+        let matrixActiveTiles = [];
+        let matrixPlayerGuessed = [];
+        let matrixIsShowingPattern = false;
+
+        function startMatrixGame() {
+            switchView('matrix');
+            matrixLevel = 1;
+            matrixLives = 3;
+            setupMatrixLevel();
+        }
+
+        function setupMatrixLevel() {
+            matrixSize = Math.min(5, Math.floor(matrixLevel / 3) + 3);
+            matrixTargetCount = Math.min(matrixSize * matrixSize - 2, matrixLevel + 2);
+
+            document.getElementById('matrixLevelIndicator').innerText = 'Lv ' + matrixLevel;
+            document.getElementById('matrixLivesIndicator').innerText = '❤️ ' + matrixLives;
+            document.getElementById('matrixStatusBanner').innerText = 'Memorize the highlighted tiles...';
+            document.getElementById('matrixStatusBanner').className = 'bg-amber-950/40 border border-amber-500/30 rounded-xl p-2.5 text-center text-xs font-semibold text-amber-300';
+
+            const grid = document.getElementById('matrixGrid');
+            grid.style.gridTemplateColumns = `repeat(${matrixSize}, minmax(0, 1fr))`;
+            grid.style.gridTemplateRows = `repeat(${matrixSize}, minmax(0, 1fr))`;
+            grid.innerHTML = '';
+
+            const totalTiles = matrixSize * matrixSize;
+            matrixActiveTiles = [];
+            matrixPlayerGuessed = [];
+
+            while (matrixActiveTiles.length < matrixTargetCount) {
+                let randIndex = Math.floor(Math.random() * totalTiles);
+                if (!matrixActiveTiles.includes(randIndex)) {
+                    matrixActiveTiles.push(randIndex);
+                }
+            }
+
+            for (let i = 0; i < totalTiles; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'bg-slate-800/90 rounded-xl transition-all duration-300 cursor-pointer border border-slate-700/60 aspect-square';
+                if (matrixActiveTiles.includes(i)) {
+                    tile.classList.add('bg-emerald-500', 'border-emerald-400', 'shadow-lg', 'shadow-emerald-500/30');
+                }
+                tile.onclick = () => handleMatrixTileClick(i, tile);
+                grid.appendChild(tile);
+            }
+
+            matrixIsShowingPattern = true;
+            let displayTime = Math.max(900, 1800 - matrixLevel * 90);
+
+            window.matrixTimer = setTimeout(() => {
+                matrixIsShowingPattern = false;
+                document.getElementById('matrixStatusBanner').innerText = 'Tap the tiles you remember!';
+                document.getElementById('matrixStatusBanner').className = 'bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-semibold text-emerald-300';
+
+                const allTiles = grid.children;
+                for (let t of allTiles) {
+                    t.classList.remove('bg-emerald-500', 'border-emerald-400', 'shadow-lg', 'shadow-emerald-500/30');
+                }
+            }, displayTime);
+            activeTimers.push(window.matrixTimer);
+        }
+
+        function handleMatrixTileClick(index, tileElement) {
+            if (matrixIsShowingPattern || matrixLives <= 0) return;
+            if (matrixPlayerGuessed.includes(index) || tileElement.classList.contains('bg-emerald-600') || tileElement.classList.contains('bg-rose-600')) return;
+
+            if (matrixActiveTiles.includes(index)) {
+                playSound('click');
+                matrixPlayerGuessed.push(index);
+                tileElement.classList.add('bg-emerald-600', 'border-emerald-500');
+
+                if (matrixPlayerGuessed.length === matrixActiveTiles.length) {
+                    playSound('success');
+                    matrixLevel++;
+
+                    if (matrixLevel - 1 > highScores.matrix) {
+                        highScores.matrix = matrixLevel - 1;
+                        localStorage.setItem('brainBoostMobileScores', JSON.stringify(highScores));
+                    }
+
+                    document.getElementById('matrixStatusBanner').innerText = '✨ Level Passed!';
+                    matrixIsShowingPattern = true;
+
+                    window.matrixNextTimer = setTimeout(() => {
+                        setupMatrixLevel();
+                    }, 900);
+                    activeTimers.push(window.matrixNextTimer);
+                }
+            } else {
+                playSound('fail');
+                matrixLives--;
+                document.getElementById('matrixLivesIndicator').innerText = '❤️ ' + matrixLives;
+                tileElement.classList.add('bg-rose-600', 'border-rose-500');
+
+                if (matrixLives <= 0) {
+                    playSound('fail');
+                    if (matrixLevel - 1 > highScores.matrix) {
+                        highScores.matrix = matrixLevel - 1;
+                        localStorage.setItem('brainBoostMobileScores', JSON.stringify(highScores));
+                    }
+                    showModal('Game Over!', 'Memory Matrix test finished.', 'Reached Level:', matrixLevel, 'Performance:', matrixLevel > 4 ? '🧠 Sharp Memory!' : '💡 Good Effort!');
+                }
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            updateDashboardScores();
+        };
+    </script>
+</body>
+</html>
