@@ -1,12 +1,12 @@
 [
   {
-    "name": "BrainBoost",
-    "description": "https://ganil6061-lab.github.io/Aisa_kyo/18.html",
+    "name": "Brain Boost",
+    "description": "https://ganil6061-lab.github.io/KD-Game/brainboost.html",
     "category": "Brain"
   },
   {
-    "name": "पहाड़ों पर बर्फ क्यों जमती है",
-    "description": "https://ganil6061-lab.github.io/Aisa_kyo/17.html",
-    "category": "Nature"
+    "name": "Math Speed",
+    "description": "https://ganil6061-lab.github.io/KD-Game/math_speed_blitz.html",
+    "category": "Math"
   }
 ]
