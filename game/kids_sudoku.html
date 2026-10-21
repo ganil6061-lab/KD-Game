@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Sudoku</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#a8edea,#fed6e3);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#06b6d4,#8b5cf6);color:#fff;text-align:center}
+header h1{font-size:22px}
+.sub{font-size:14px;opacity:.9;margin-top:6px}
+.grid-wrap{padding:20px;display:flex;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#1e293b;padding:4px;border-radius:12px;width:100%;max-width:320px;aspect-ratio:1}
+.cell{background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;transition:all .15s;font-weight:700;user-select:none}
+.cell.fixed{background:#e0e7ff;color:#4338ca}
+.cell.selected{background:#fef3c7;box-shadow:inset 0 0 0 3px #f59e0b}
+.cell.highlight{background:#f0f9ff}
+.cell.wrong{animation:shake .4s;background:#fee2e2}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cell.correct{animation:pop .4s}
+@keyframes pop{50%{transform:scale(1.2);background:#dcfce7}}
+.picker{display:flex;justify-content:center;gap:10px;padding:0 20px;flex-wrap:wrap}
+.opt{width:60px;height:60px;border-radius:14px;background:linear-gradient(135deg,#06b6d4,#8b5cf6);color:#fff;font-size:30px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(6,182,212,.3)}
+.opt:active{transform:scale(.95)}
+.opt.erase{background:linear-gradient(135deg,#ef4444,#f97316);font-size:20px}
+.controls{display:flex;gap:10px;padding:16px 20px 24px;margin-top:auto}
+.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;color:#fff}
+.btn.check{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.btn.new{background:linear-gradient(135deg,#06b6d4,#8b5cf6)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:36px;margin-bottom:16px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🔢 Kids Sudoku</h1><div class="sub">Fill each row, column & 2×2 box</div></header>
+  <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+  <div class="picker" id="picker">
+    <button class="opt" data-val="🍎">🍎</button>
+    <button class="opt" data-val="🍌">🍌</button>
+    <button class="opt" data-val="🍇">🍇</button>
+    <button class="opt" data-val="🍊">🍊</button>
+    <button class="opt erase" data-val="">✖</button>
+  </div>
+  <div class="controls">
+    <button class="btn check" id="check">✓ Check</button>
+    <button class="btn new" id="newGame">🔄 New Puzzle</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2>🎉 Solved!</h2>
+    <p>Great job! You completed the puzzle!</p>
+    <button id="again">New Puzzle</button>
+  </div>
+</div>
+<script>
+const EMOJIS=['🍎','🍌','🍇','🍊'];
+let board=[],fixed=[],selected=null;
+const gridEl=document.getElementById('grid'),overlay=document.getElementById('overlay');
+function solve(b){
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    if(b[r][c]===0){
+      const nums=[1,2,3,4].sort(()=>Math.random()-.5);
+      for(const n of nums){
+        if(valid(b,r,c,n)){b[r][c]=n;if(solve(b))return true;b[r][c]=0}
+      }
+      return false;
+    }
+  }
+  return true;
+}
+function valid(b,r,c,n){
+  for(let i=0;i<4;i++){if(b[r][i]===n||b[i][c]===n)return false}
+  const br=Math.floor(r/2)*2,bc=Math.floor(c/2)*2;
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++)if(b[br+i][bc+j]===n)return false;
+  return true;
+}
+function newPuzzle(){
+  board=Array.from({length:4},()=>[0,0,0,0]);
+  solve(board);
+  fixed=board.map(r=>r.map(()=>false));
+  // remove some cells (keep 8 fixed)
+  let remove=8;
+  while(remove>0){
+    const r=Math.floor(Math.random()*4),c=Math.floor(Math.random()*4);
+    if(board[r][c]!==0){board[r][c]=0;remove--}
+  }
+  board.forEach((row,r)=>row.forEach((v,c)=>{if(v!==0)fixed[r][c]=true}));
+  render();overlay.classList.remove('show');
+}
+function render(){
+  gridEl.innerHTML='';
+  board.forEach((row,r)=>row.forEach((v,c)=>{
+    const d=document.createElement('div');
+    d.className='cell'+(fixed[r][c]?' fixed':'');
+    d.textContent=v?EMOJIS[v-1]:'';
+    d.dataset.r=r;d.dataset.c=c;
+    if(!fixed[r][c])d.onclick=()=>selectCell(d,r,c);
+    gridEl.appendChild(d);
+  }));
+}
+function selectCell(el,r,c){
+  document.querySelectorAll('.cell').forEach(x=>x.classList.remove('selected','highlight'));
+  el.classList.add('selected');selected={r,c};
+  document.querySelectorAll('.cell').forEach(x=>{
+    if(x.dataset.r==r||x.dataset.c==c)x.classList.add('highlight');
+  });
+}
+document.querySelectorAll('.opt').forEach(b=>{
+  b.onclick=()=>{
+    if(!selected)return;
+    const {r,c}=selected;
+    if(fixed[r][c])return;
+    const val=b.dataset.val;
+    const idx=EMOJIS.indexOf(val)+1;
+    board[r][c]=idx;
+    const cell=gridEl.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    cell.textContent=val;
+    cell.classList.remove('selected');
+    selected=null;
+  };
+});
+document.getElementById('check').onclick=()=>{
+  let ok=true;
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    if(board[r][c]===0){ok=false;continue}
+    const v=board[r][c];board[r][c]=0;
+    if(!valid(board,r,c,v)){ok=false;
+      const cell=gridEl.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+      cell.classList.add('wrong');setTimeout(()=>cell.classList.remove('wrong'),500);
+    }
+    board[r][c]=v;
+  }
+  if(ok){overlay.classList.add('show')}
+};
+document.getElementById('newGame').onclick=newPuzzle;
+document.getElementById('again').onclick=newPuzzle;
+newPuzzle();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect 4</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#89f7fe,#66a6ff);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#f0f9ff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:10px}
+.turn{font-size:16px;font-weight:700;padding:8px 20px;background:rgba(255,255,255,.2);border-radius:20px;display:inline-block}
+.scores{display:flex;justify-content:space-around;font-size:14px;font-weight:600;margin-top:10px}
+.scores span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.board-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
+.board{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:6px;background:#1e40af;padding:10px;border-radius:16px;width:100%;max-width:360px;aspect-ratio:7/6;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.slot{background:#f0f9ff;border-radius:50%;cursor:pointer;transition:all .15s;position:relative}
+.slot:hover{background:#dbeafe}
+.slot.red{background:radial-gradient(circle at 30% 30%,#f87171,#dc2626);box-shadow:inset 0 -4px 8px rgba(0,0,0,.3)}
+.slot.yellow{background:radial-gradient(circle at 30% 30%,#fde047,#eab308);box-shadow:inset 0 -4px 8px rgba(0,0,0,.3)}
+.slot.win{animation:winPulse .6s infinite}
+@keyframes winPulse{50%{box-shadow:0 0 20px 4px #fff,inset 0 -4px 8px rgba(0,0,0,.3)}}
+.controls{display:flex;gap:10px;padding:0 20px 24px}
+.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
+.btn.new{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.btn.hint{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:42px;margin-bottom:16px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🔴 Connect 4</h1>
+    <div class="turn" id="turn">🔴 Red's Turn</div>
+    <div class="scores"><span>🔴 <b id="redScore">0</b></span><span>🟡 <b id="yellowScore">0</b></span></div>
+  </header>
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <div class="controls">
+    <button class="btn new" id="newGame">🔄 New Game</button>
+    <button class="btn hint" id="hint">💡 Hint</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2 id="overlayTitle">🔴 Red Wins!</h2>
+    <button id="again">Play Again</button>
+  </div>
+</div>
+<script>
+const ROWS=6,COLS=7;
+let board=[],turn='red',gameOver=false,redScore=0,yellowScore=0,aiMode=false;
+const boardEl=document.getElementById('board'),turnEl=document.getElementById('turn'),overlay=document.getElementById('overlay'),overlayTitle=document.getElementById('overlayTitle');
+function init(){
+  board=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+  turn='red';gameOver=false;
+  overlay.classList.remove('show');
+  render();
+  updateTurn();
+}
+function render(){
+  boardEl.innerHTML='';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const s=document.createElement('div');
+    s.className='slot'+(board[r][c]?' '+board[r][c]:'');
+    s.dataset.r=r;s.dataset.c=c;
+    s.onclick=()=>drop(c);
+    boardEl.appendChild(s);
+  }
+}
+function drop(c){
+  if(gameOver)return;
+  if(board[0][c]!=='')return;
+  let r=ROWS-1;
+  while(r>=0&&board[r][c]!=='')r--;
+  board[r][c]=turn;
+  const slot=boardEl.children[r*COLS+c];
+  slot.classList.add(turn);
+  const winCells=checkWin(r,c,turn);
+  if(winCells){
+    gameOver=true;
+    winCells.forEach(([wr,wc])=>boardEl.children[wr*COLS+wc].classList.add('win'));
+    if(turn==='red'){redScore++;document.getElementById('redScore').textContent=redScore}
+    else{yellowScore++;document.getElementById('yellowScore').textContent=yellowScore}
+    setTimeout(()=>{
+      overlayTitle.textContent=(turn==='red'?'🔴 Red':'🟡 Yellow')+' Wins! 🎉';
+      overlay.classList.add('show');
+    },600);
+    return;
+  }
+  if(board[0].every(c=>c!=='')){gameOver=true;setTimeout(()=>{overlayTitle.textContent='🤝 Draw!';overlay.classList.add('show')},400);return}
+  turn=turn==='red'?'yellow':'red';
+  updateTurn();
+}
+function checkWin(r,c,p){
+  const dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(const [dr,dc] of dirs){
+    const cells=[[r,c]];
+    for(let s=1;s<4;s++){const nr=r+dr*s,nc=c+dc*s;if(nr<0||nr>=ROWS||nc<0||nc>=COLS||board[nr][nc]!==p)break;cells.push([nr,nc])}
+    for(let s=1;s<4;s++){const nr=r-dr*s,nc=c-dc*s;if(nr<0||nr>=ROWS||nc<0||nc>=COLS||board[nr][nc]!==p)break;cells.push([nr,nc])}
+    if(cells.length>=4)return cells;
+  }
+  return null;
+}
+function updateTurn(){
+  turnEl.textContent=(turn==='red'?'🔴 Red':'🟡 Yellow')+"'s Turn";
+}
+document.getElementById('newGame').onclick=init;
+document.getElementById('again').onclick=init;
+document.getElementById('hint').onclick=()=>{
+  // find a winning or blocking column
+  for(let c=0;c<COLS;c++){
+    if(board[0][c]!=='')continue;
+    let r=ROWS-1;while(r>=0&&board[r][c]!=='')r--;
+    board[r][c]=turn;
+    if(checkWin(r,c,turn)){board[r][c]='';highlightCol(c);return}
+    board[r][c]='';
+  }
+  // block opponent
+  const opp=turn==='red'?'yellow':'red';
+  for(let c=0;c<COLS;c++){
+    if(board[0][c]!=='')continue;
+    let r=ROWS-1;while(r>=0&&board[r][c]!=='')r--;
+    board[r][c]=opp;
+    if(checkWin(r,c,opp)){board[r][c]='';highlightCol(c);return}
+    board[r][c]='';
+  }
+  highlightCol(Math.floor(Math.random()*COLS));
+};
+function highlightCol(c){
+  for(let r=0;r<ROWS;r++){
+    const s=boardEl.children[r*COLS+c];
+    s.style.boxShadow='0 0 0 3px #fbbf24';
+    setTimeout(()=>s.style.boxShadow='',1500);
+  }
+}
+init();
+</script>
+</body>
+</html>

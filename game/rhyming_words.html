@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rhyming Words</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#a1c4fd,#c2e9fb);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#f0f9ff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:10px}
+.stats{display:flex;justify-content:space-around;font-size:14px;font-weight:600}
+.stats span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.target-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.target-label{font-size:16px;color:#6b7280;font-weight:600;margin-bottom:14px}
+.target{font-size:52px;font-weight:900;color:#1e40af;background:#fff;padding:24px 48px;border-radius:24px;box-shadow:0 10px 30px rgba(59,130,246,.3);animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px 20px}
+.opt{padding:24px;border-radius:18px;background:#fff;font-size:26px;font-weight:800;color:#1e293b;border:none;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.08);transition:all .15s;font-family:inherit}
+.opt:active{transform:scale(.96)}
+.opt.correct{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;animation:pop .5s}
+@keyframes pop{50%{transform:scale(1.1)}}
+.opt.wrong{background:#fee2e2;animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:40px;margin-bottom:16px}
+.overlay p{font-size:18px;margin-bottom:24px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🎵 Rhyming Words</h1>
+    <div class="stats"><span>Score: <b id="score">0</b></span><span>Progress: <b id="prog">1</b>/10</span></div>
+  </header>
+  <div class="target-wrap">
+    <div class="target-label">Which word rhymes with...</div>
+    <div class="target" id="target">CAT</div>
+  </div>
+  <div class="options" id="options"></div>
+  <div class="overlay" id="overlay">
+    <h2>🏆 Rhyme Master!</h2>
+    <p id="finalScore"></p>
+    <button id="again">Play Again</button>
+  </div>
+</div>
+<script>
+const PAIRS=[
+  {t:'CAT',r:'HAT',w:['DOG','SUN','BEE']},
+  {t:'DOG',r:'LOG',w:['CAT','SKY','TREE']},
+  {t:'SUN',r:'FUN',w:['MOON','CAR','BEE']},
+  {t:'BEE',r:'TREE',w:['FISH','STAR','DOG']},
+  {t:'STAR',r:'CAR',w:['MOON','SUN','HAT']},
+  {t:'MOON',r:'SPOON',w:['STAR','FISH','LOG']},
+  {t:'CAKE',r:'LAKE',w:['DOG','BEE','TREE']},
+  {t:'FROG',r:'LOG',w:['CAT','SUN','STAR']},
+  {t:'BALL',r:'TALL',w:['FISH','MOON','CAR']},
+  {t:'RING',r:'SING',w:['DOG','STAR','TREE']}
+];
+const targetEl=document.getElementById('target'),optionsEl=document.getElementById('options'),scoreEl=document.getElementById('score'),progEl=document.getElementById('prog'),overlay=document.getElementById('overlay'),finalScore=document.getElementById('finalScore');
+let order=[],idx=0,score=0,locked=false;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function start(){
+  order=shuffle([...PAIRS]).slice(0,10);idx=0;score=0;locked=false;
+  scoreEl.textContent=0;overlay.classList.remove('show');load();
+}
+function load(){
+  if(idx>=order.length){end();return}
+  locked=false;
+  const q=order[idx];
+  targetEl.textContent=q.t;progEl.textContent=idx+1;
+  const opts=shuffle([q.r,...q.w]);
+  optionsEl.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=o;
+    b.onclick=()=>pick(b,o===q.r);
+    optionsEl.appendChild(b);
+  });
+}
+function pick(btn,correct){
+  if(locked)return;locked=true;
+  if(correct){
+    btn.classList.add('correct');score++;scoreEl.textContent=score;
+    setTimeout(()=>{idx++;load()},700);
+  }else{
+    btn.classList.add('wrong');
+    setTimeout(()=>{btn.classList.remove('wrong');locked=false},600);
+  }
+}
+function end(){
+  finalScore.textContent=`Score: ${score} / 10`;
+  overlay.classList.add('show');
+}
+document.getElementById('again').onclick=start;
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Chess</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#d4a574,#8b6f47);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#faf5eb;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#8b5a2b,#5d3a1a);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:8px}
+.turn{font-size:16px;font-weight:700;padding:6px 16px;background:rgba(255,255,255,.2);border-radius:20px;display:inline-block}
+.board-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
+.board{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);width:100%;max-width:340px;aspect-ratio:1;border:4px solid #5d3a1a;border-radius:8px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.sq{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;user-select:none;transition:all .15s}
+.sq.light{background:#f0d9b5}.sq.dark{background:#b58863}
+.sq.sel{background:#f7dc6f!important;box-shadow:inset 0 0 0 3px #f39c12}
+.sq.move{position:relative}
+.sq.move::after{content:'';position:absolute;width:30%;height:30%;border-radius:50%;background:rgba(34,197,94,.6)}
+.sq.capture::after{width:80%;height:80%;background:rgba(239,68,68,.5);border-radius:8px}
+.sq:active{transform:scale(.96)}
+.controls{display:flex;gap:10px;padding:0 20px 24px}
+.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
+.btn.new{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.btn.hint{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:36px;margin-bottom:16px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>♟️ Mini Chess</h1><div class="turn" id="turn">⚪ White's Turn</div></header>
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <div class="controls">
+    <button class="btn new" id="newGame">🔄 New</button>
+    <button class="btn hint" id="hint">💡 Hint</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2 id="overlayTitle">🎉 White Wins!</h2>
+    <button id="again">Play Again</button>
+  </div>
+</div>
+<script>
+// 5x5 mini chess. Pieces: K king, Q queen, R rook, B bishop, N knight, P pawn
+const PIECES={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+let board=[],turn='w',selected=null,legalMoves=[];
+function initBoard(){
+  // 5x5 setup
+  board=[
+    ['r','n','b','q','k'],
+    ['p','p','p','p','p'],
+    ['','','','',''],
+    ['P','P','P','P','P'],
+    ['R','N','B','Q','K']
+  ];
+  turn='w';selected=null;legalMoves=[];
+  render();
+}
+function isWhite(p){return p&&p===p.toUpperCase()}
+function isBlack(p){return p&&p===p.toLowerCase()}
+function render(){
+  const boardEl=document.getElementById('board');boardEl.innerHTML='';
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+    const sq=document.createElement('div');
+    sq.className='sq '+((r+c)%2===0?'light':'dark');
+    sq.dataset.r=r;sq.dataset.c=c;
+    if(board[r][c])sq.textContent=PIECES[board[r][c]];
+    if(selected&&selected.r===r&&selected.c===c)sq.classList.add('sel');
+    const isMove=legalMoves.some(m=>m.r===r&&m.c===c);
+    if(isMove){
+      sq.classList.add('move');
+      if(board[r][c])sq.classList.add('capture');
+    }
+    sq.onclick=()=>click(r,c);
+    boardEl.appendChild(sq);
+  }
+  document.getElementById('turn').textContent=(turn==='w'?'⚪ White':'⚫ Black')+"'s Turn";
+}
+function click(r,c){
+  const p=board[r][c];
+  if(selected){
+    if(legalMoves.some(m=>m.r===r&&m.c===c)){
+      // move
+      const captured=board[r][c];
+      board[r][c]=board[selected.r][selected.c];
+      board[selected.r][selected.c]='';
+      selected=null;legalMoves=[];
+      if(captured&&captured.toLowerCase()==='k'){win(turn==='w'?'White':'Black');return}
+      turn=turn==='w'?'b':'w';render();
+      return;
+    }
+  }
+  if(p&&((turn==='w'&&isWhite(p))||(turn==='b'&&isBlack(p)))){
+    selected={r,c};legalMoves=getLegal(r,c,p);render();
+  }else{
+    selected=null;legalMoves=[];render();
+  }
+}
+function inB(r,c){return r>=0&&r<5&&c>=0&&c<5}
+function getLegal(r,c,p){
+  const moves=[];const type=p.toLowerCase();
+  const dirs={R:[[0,1],[0,-1],[1,0],[-1,0]],B:[[1,1],[1,-1],[-1,1],[-1,-1]],Q:[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+  if(type==='p'){
+    const dir=isWhite(p)?-1:1;
+    if(inB(r+dir,c)&&!board[r+dir][c])moves.push({r:r+dir,c});
+    // capture
+    [[dir,-1],[dir,1]].forEach(([dr,dc])=>{
+      const nr=r+dr,nc=c+dc;
+      if(inB(nr,nc)&&board[nr][nc]&&((isWhite(p)&&isBlack(board[nr][nc]))||(isBlack(p)&&isWhite(board[nr][nc]))))moves.push({r:nr,c:nc});
+    });
+  }else if(type==='n'){
+    [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]].forEach(([dr,dc])=>{
+      const nr=r+dr,nc=c+dc;
+      if(inB(nr,nc)&&!sameColor(p,board[nr][nc]))moves.push({r:nr,c:nc});
+    });
+  }else if(type==='k'){
+    [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr,dc])=>{
+      const nr=r+dr,nc=c+dc;
+      if(inB(nr,nc)&&!sameColor(p,board[nr][nc]))moves.push({r:nr,c:nc});
+    });
+  }else{
+    dirs[type.toUpperCase()].forEach(([dr,dc])=>{
+      let nr=r+dr,nc=c+dc;
+      while(inB(nr,nc)){
+        if(!board[nr][nc])moves.push({r:nr,c:nc});
+        else{if(!sameColor(p,board[nr][nc]))moves.push({r:nr,c:nc});break}
+        nr+=dr;nc+=dc;
+      }
+    });
+  }
+  return moves;
+}
+function sameColor(a,b){return b&&((isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b)))}
+function win(w){
+  document.getElementById('overlayTitle').textContent=`🎉 ${w} Wins!`;
+  document.getElementById('overlay').classList.add('show');
+}
+document.getElementById('newGame').onclick=initBoard;
+document.getElementById('again').onclick=()=>{document.getElementById('overlay').classList.remove('show');initBoard()};
+document.getElementById('hint').onclick=()=>{
+  // find any legal move for current turn
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+    const p=board[r][c];
+    if(p&&((turn==='w'&&isWhite(p))||(turn==='b'&&isBlack(p)))){
+      const m=getLegal(r,c,p);
+      if(m.length){selected={r,c};legalMoves=m;render();return}
+    }
+  }
+};
+initBoard();
+</script>
+</body>
+</html>

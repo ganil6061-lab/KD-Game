@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tangram Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#c9d6ff,#e2e2e2);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-align:center}
+header h1{font-size:22px}
+.sub{font-size:13px;opacity:.9;margin-top:6px}
+.preview{margin:12px 20px;padding:10px;background:#f3f4f6;border-radius:12px;text-align:center;font-size:14px;font-weight:600;color:#6b7280}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:6px;padding:0 20px;aspect-ratio:1;background:#f9fafb;border-radius:16px;margin:0 20px}
+.cell{background:#e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:28px}
+.cell.placed{background:#a78bfa;cursor:default}
+.cell.target{background:#fef3c7;box-shadow:inset 0 0 0 2px #f59e0b}
+.palette{display:flex;justify-content:center;gap:12px;padding:16px 20px;flex-wrap:wrap}
+.tile{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;border:3px solid transparent;transition:all .15s;background:#f3f4f6}
+.tile.selected{border-color:#8b5cf6;background:#ede9fe;transform:scale(1.1)}
+.tile:active{transform:scale(.95)}
+.controls{display:flex;gap:10px;padding:0 20px 24px;margin-top:auto}
+.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
+.btn.reset{background:linear-gradient(135deg,#ef4444,#f97316)}
+.btn.next{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:36px;margin-bottom:16px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🧩 Tangram Builder</h1><div class="sub">Match the pattern!</div></header>
+  <div class="preview" id="preview">Pattern: 🏠 House</div>
+  <div class="grid" id="grid"></div>
+  <div class="palette" id="palette"></div>
+  <div class="controls">
+    <button class="btn reset" id="reset">🔄 Reset</button>
+    <button class="btn next" id="next">➡ Next</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2>🎉 Perfect!</h2>
+    <button id="again">Next Pattern</button>
+  </div>
+</div>
+<script>
+// Patterns: which cells should be filled (index 0-15 in 4x4)
+const patterns=[
+  {name:'🏠 House',cells:[1,2,4,5,6,7,8,9,10,11,12,13,14,15]},
+  {name:'➡ Arrow',cells:[1,4,5,6,7,8,9,10,11,13]},
+  {name:'🐟 Fish',cells:[1,2,5,6,7,8,9,10,11,12,14,15]}
+];
+const gridEl=document.getElementById('grid'),paletteEl=document.getElementById('palette'),previewEl=document.getElementById('preview'),overlay=document.getElementById('overlay');
+let patternIdx=0,selectedTile=null,placed={};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function buildPattern(){
+  const p=patterns[patternIdx];
+  previewEl.textContent='Pattern: '+p.name;
+  gridEl.innerHTML='';placed={};
+  for(let i=0;i<16;i++){
+    const d=document.createElement('div');d.className='cell';d.dataset.i=i;
+    if(p.cells.includes(i))d.classList.add('target');
+    d.onclick=()=>place(d,i);
+    gridEl.appendChild(d);
+  }
+  // palette: total tiles = pattern.cells.length
+  paletteEl.innerHTML='';
+  const tiles=p.cells.map((_,i)=>i);
+  tiles.forEach(i=>{
+    const t=document.createElement('div');t.className='tile';t.textContent='◼';
+    t.onclick=()=>{selectedTile=i;document.querySelectorAll('.tile').forEach(x=>x.classList.remove('selected'));t.classList.add('selected')};
+    paletteEl.appendChild(t);
+  });
+}
+function place(el,i){
+  if(selectedTile===null)return;
+  if(el.classList.contains('placed'))return;
+  if(el.classList.contains('target')){
+    el.classList.add('placed');el.textContent='🟪';
+    placed[i]=true;selectedTile=null;
+    document.querySelectorAll('.tile').forEach(x=>x.classList.remove('selected'));
+    checkWin();
+  }else{
+    el.style.background='#fee2e2';setTimeout(()=>el.style.background='',300);
+  }
+}
+function checkWin(){
+  const targets=document.querySelectorAll('.cell.target');
+  const allPlaced=[...targets].every(t=>t.classList.contains('placed'));
+  if(allPlaced)setTimeout(()=>overlay.classList.add('show'),300);
+}
+document.getElementById('reset').onclick=buildPattern;
+document.getElementById('next').onclick=()=>{patternIdx=(patternIdx+1)%patterns.length;overlay.classList.remove('show');buildPattern()};
+document.getElementById('again').onclick=()=>{patternIdx=(patternIdx+1)%patterns.length;overlay.classList.remove('show');buildPattern()};
+buildPattern();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I Spy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#fbc2eb,#a6c1ee);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#fff9f0;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#f472b6,#a78bfa);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:8px}
+header p{font-size:16px;font-weight:600}
+.clue{background:#fff;margin:12px;padding:14px;border-radius:14px;text-align:center;font-size:18px;font-weight:700;color:#7c3aed;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.scene{flex:1;position:relative;margin:0 12px;background:linear-gradient(180deg,#e0f2fe,#fef3c7);border-radius:16px;overflow:hidden}
+.obj{position:absolute;font-size:36px;cursor:pointer;transition:transform .2s;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.obj:active{transform:scale(1.3)}
+.obj.correct{animation:pop .5s;pointer-events:none}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.8);filter:brightness(1.5)}100%{transform:scale(0);opacity:0}}
+.obj.wrong{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.obj.hint{filter:drop-shadow(0 0 12px #fbbf24) drop-shadow(0 0 20px #fbbf24)}
+.footer{padding:16px;display:flex;justify-content:space-between;align-items:center}
+.score{font-size:18px;font-weight:700;color:#7c3aed}
+.btn{padding:12px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,#f472b6,#a78bfa);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:36px;margin-bottom:16px}
+.overlay p{font-size:20px;margin-bottom:24px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🔍 I Spy</h1><p id="clue">Find the RED apple!</p></header>
+  <div class="clue" id="clueBox">I spy something... 🍎</div>
+  <div class="scene" id="scene"></div>
+  <div class="footer">
+    <div class="score">Score: <b id="score">0</b> / 5</div>
+    <button class="btn" id="newRound">🔄 New Round</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2>🎉 Great Job!</h2>
+    <p>You found all 5 objects!</p>
+    <button id="again">Play Again</button>
+  </div>
+</div>
+<script>
+const pool=[
+  {e:'🍎',clue:'a RED apple'},{e:'🚗',clue:'a BLUE car'},{e:'🐶',clue:'a BROWN dog'},
+  {e:'🌳',clue:'a GREEN tree'},{e:'⭐',clue:'a YELLOW star'},{e:'🎈',clue:'a PINK balloon'},
+  {e:'🦋',clue:'a BLUE butterfly'},{e:'🍕',clue:'a cheesy PIZZA'},{e:'🐟',clue:'an ORANGE fish'},
+  {e:'🎵',clue:'a music NOTE'},{e:'🌸',clue:'a PINK flower'},{e:'🍌',clue:'a YELLOW banana'},
+  {e:'🐸',clue:'a GREEN frog'},{e:'🍇',clue:'PURPLE grapes'},{e:'🌞',clue:'a bright SUN'}
+];
+const scene=document.getElementById('scene'),clueBox=document.getElementById('clueBox'),scoreEl=document.getElementById('score'),overlay=document.getElementById('overlay');
+let target,score=0,currentRound=[],hintTimer;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function newRound(){
+  scene.innerHTML='';score=0;scoreEl.textContent=0;overlay.classList.remove('show');
+  currentRound=shuffle([...pool]).slice(0,10);
+  target=currentRound[Math.floor(Math.random()*currentRound.length)];
+  clueBox.textContent='I spy... '+target.clue;
+  const emojis=[...new Set(currentRound.map(o=>o.e))];
+  while(emojis.length<12)emojis.push(shuffle([...pool])[0].e);
+  const final=shuffle(emojis).slice(0,12);
+  if(!final.includes(target.e))final[Math.floor(Math.random()*12)]=target.e;
+  final.forEach((e,i)=>{
+    const d=document.createElement('div');d.className='obj';d.textContent=e;
+    d.style.left=(5+Math.random()*75)+'%';d.style.top=(5+Math.random()*75)+'%';
+    d.style.animationDelay=(Math.random()*2)+'s';
+    d.onclick=()=>tap(d,e);scene.appendChild(d);
+  });
+}
+function tap(el,emoji){
+  if(emoji===target.e){
+    el.classList.add('correct');score++;scoreEl.textContent=score;
+    clearTimeout(hintTimer);
+    if(score>=5){setTimeout(()=>overlay.classList.add('show'),600);return}
+    setTimeout(()=>{
+      target=currentRound[Math.floor(Math.random()*currentRound.length)];
+      clueBox.textContent='I spy... '+target.clue;
+      document.querySelectorAll('.obj').forEach(o=>o.classList.remove('hint'));
+      startHint();
+    },700);
+  }else{
+    el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),400);
+  }
+}
+function startHint(){
+  clearTimeout(hintTimer);
+  hintTimer=setTimeout(()=>{
+    document.querySelectorAll('.obj').forEach(o=>{if(o.textContent===target.e)o.classList.add('hint')});
+  },4000);
+}
+document.getElementById('newRound').onclick=newRound;
+document.getElementById('again').onclick=newRound;
+newRound();startHint();
+</script>
+</body>
+</html>

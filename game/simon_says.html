@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simon Says</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:#1a1a2e;font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:linear-gradient(160deg,#16213e,#0f3460);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative;color:#fff}
+header{padding:20px;text-align:center}
+header h1{font-size:24px;margin-bottom:12px}
+.stats{display:flex;justify-content:space-around;font-size:15px;font-weight:600}
+.stats span{background:rgba(255,255,255,.1);padding:8px 18px;border-radius:20px}
+.status{text-align:center;font-size:18px;font-weight:600;padding:12px;color:#4ade80;min-height:48px}
+.board{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;padding:24px}
+.pad{border-radius:24px;cursor:pointer;transition:all .15s;opacity:.6;display:flex;align-items:center;justify-content:center;font-size:48px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.3)}
+.pad.red{background:#ef4444}.pad.green{background:#22c55e}.pad.blue{background:#3b82f6}.pad.yellow{background:#eab308}
+.pad.active{opacity:1;transform:scale(1.05);box-shadow:0 0 40px currentColor,inset 0 -6px 0 rgba(0,0,0,.3);filter:brightness(1.4)}
+.pad:active{transform:scale(.97)}
+.btn{margin:16px 24px 24px;padding:16px;border:none;border-radius:16px;background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(74,222,128,.4)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:10}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:42px;margin-bottom:16px}
+.overlay p{font-size:20px;margin-bottom:24px}
+.overlay button{padding:14px 36px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🎮 Simon Says</h1>
+    <div class="stats"><span>Level: <b id="level">0</b></span><span>Best: <b id="best">0</b></span></div>
+  </header>
+  <div class="status" id="status">Tap Start to Play</div>
+  <div class="board">
+    <div class="pad red" data-color="red">🔴</div>
+    <div class="pad green" data-color="green">🟢</div>
+    <div class="pad blue" data-color="blue">🔵</div>
+    <div class="pad yellow" data-color="yellow">🟡</div>
+  </div>
+  <button class="btn" id="start">▶ Start Game</button>
+  <div class="overlay" id="overlay">
+    <h2>💥 Game Over!</h2>
+    <p id="finalScore"></p>
+    <button id="retry">Try Again</button>
+  </div>
+</div>
+<script>
+const pads=document.querySelectorAll('.pad'),statusEl=document.getElementById('status'),levelEl=document.getElementById('level'),bestEl=document.getElementById('best'),overlay=document.getElementById('overlay'),finalScore=document.getElementById('finalScore'),startBtn=document.getElementById('start');
+let sequence=[],playerIdx=0,level=0,playing=false,canClick=false;
+let best=parseInt(localStorage.getItem('simonBest')||'0');bestEl.textContent=best;
+const colors=['red','green','blue','yellow'];
+function flash(color,dur=400){
+  const p=document.querySelector(`.pad.${color}`);p.classList.add('active');
+  setTimeout(()=>p.classList.remove('active'),dur);
+}
+function nextRound(){
+  level++;levelEl.textContent=level;playerIdx=0;
+  sequence.push(colors[Math.floor(Math.random()*4)]);
+  statusEl.textContent='Watch carefully...';canClick=false;
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>=sequence.length){clearInterval(iv);canClick=true;statusEl.textContent='Your turn!';return}
+    flash(sequence[i]);i++;
+  },700);
+}
+function handleClick(e){
+  if(!canClick)return;
+  const color=e.currentTarget.dataset.color;
+  flash(color,250);
+  if(color===sequence[playerIdx]){
+    playerIdx++;
+    if(playerIdx===sequence.length){canClick=false;statusEl.textContent='✅ Correct!';setTimeout(nextRound,1000)}
+  }else{
+    canClick=false;playing=false;
+    if(level-1>best){best=level-1;localStorage.setItem('simonBest',best);bestEl.textContent=best}
+    finalScore.textContent=`You reached Level ${level}`;
+    overlay.classList.add('show');
+  }
+}
+pads.forEach(p=>p.addEventListener('click',handleClick));
+function startGame(){sequence=[];level=0;overlay.classList.remove('show');startBtn.disabled=true;playing=true;nextRound()}
+startBtn.onclick=startGame;
+document.getElementById('retry').onclick=()=>{startBtn.disabled=false;startGame()};
+</script>
+</body>
+</html>

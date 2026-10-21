@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#fbc2eb,#a6c1ee);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#fff9f0;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#f472b6,#a78bfa);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:8px}
+.stats{display:flex;justify-content:space-around;font-size:14px;font-weight:600}
+.stats span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.emoji-prompt{text-align:center;font-size:80px;padding:20px 0 10px}
+.hint{text-align:center;font-size:16px;color:#6b7280;font-weight:600;margin-bottom:16px}
+.slots{display:flex;justify-content:center;gap:8px;padding:0 20px;flex-wrap:wrap;min-height:60px;margin-bottom:16px}
+.slot{width:44px;height:54px;border-bottom:3px solid #8b5cf6;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#1e293b;cursor:pointer;background:#f9fafb;border-radius:8px 8px 0 0}
+.slot.filled{background:#ede9fe}
+.pool{flex:1;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:10px;padding:16px 20px}
+.tile{width:52px;height:52px;background:linear-gradient(135deg,#f472b6,#a78bfa);color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #7c3aed;transition:all .1s;user-select:none}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 #7c3aed}
+.tile.used{opacity:.3;pointer-events:none}
+.controls{display:flex;gap:10px;padding:16px 20px 24px}
+.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;color:#fff}
+.btn.skip{background:linear-gradient(135deg,#f97316,#ef4444)}
+.btn.shuffle{background:linear-gradient(135deg,#06b6d4,#3b82f6)}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:36px;margin-bottom:16px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>📝 Word Builder</h1>
+    <div class="stats"><span>Score: <b id="score">0</b></span><span>Word: <b id="wordNum">1</b>/10</span></div>
+  </header>
+  <div class="emoji-prompt" id="prompt">🐘</div>
+  <div class="hint" id="hint">5 letters</div>
+  <div class="slots" id="slots"></div>
+  <div class="pool" id="pool"></div>
+  <div class="controls">
+    <button class="btn shuffle" id="shuffle">🔀 Shuffle</button>
+    <button class="btn skip" id="skip">⏭ Skip</button>
+  </div>
+  <div class="overlay" id="overlay">
+    <h2>✅ Correct!</h2>
+    <p id="wordAnswer"></p>
+    <button id="next">Next Word</button>
+  </div>
+</div>
+<script>
+const WORDS=[
+  {e:'🐘',w:'ELEPHANT'},{e:'🍎',w:'APPLE'},{e:'🌞',w:'SUN'},{e:'🚗',w:'CAR'},
+  {e:'🐟',w:'FISH'},{e:'🏠',w:'HOUSE'},{e:'🌳',w:'TREE'},{e:'🐶',w:'DOG'},
+  {e:'📚',w:'BOOK'},{e:'⭐',w:'STAR'}
+];
+const promptEl=document.getElementById('prompt'),hintEl=document.getElementById('hint'),slotsEl=document.getElementById('slots'),poolEl=document.getElementById('pool'),scoreEl=document.getElementById('score'),wordNumEl=document.getElementById('wordNum'),overlay=document.getElementById('overlay'),wordAnswer=document.getElementById('wordAnswer');
+let current,currentWordNum=0,score=0,answer=[];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function loadWord(){
+  current=WORDS[currentWordNum%WORDS.length];
+  wordNumEl.textContent=(currentWordNum%WORDS.length)+1;
+  promptEl.textContent=current.e;
+  hintEl.textContent=current.w.length+' letters';
+  answer=[];
+  overlay.classList.remove('show');
+  // slots
+  slotsEl.innerHTML='';
+  for(let i=0;i<current.w.length;i++){
+    const s=document.createElement('div');s.className='slot';s.dataset.i=i;
+    s.onclick=()=>{if(answer[i]){answer[i]=null;render()}};
+    slotsEl.appendChild(s);
+  }
+  // pool: word letters + 3 random extra
+  const letters=current.w.split('');
+  const extra='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const pool=[...letters];
+  while(pool.length<letters.length+3)pool.push(extra[Math.floor(Math.random()*26)]);
+  shuffle(pool);
+  poolEl.innerHTML='';
+  pool.forEach((l,i)=>{
+    const t=document.createElement('div');t.className='tile';t.textContent=l;t.dataset.letter=l;
+    t.onclick=()=>pickLetter(t,l);
+    poolEl.appendChild(t);
+  });
+  render();
+}
+function pickLetter(tile,letter){
+  const idx=answer.findIndex(a=>a===null);
+  if(idx===-1)return;
+  answer[idx]=letter;tile.classList.add('used');tile.dataset.slot=idx;
+  render();
+  if(!answer.includes(null)){
+    if(answer.join('')===current.w){
+      score++;scoreEl.textContent=score;
+      wordAnswer.textContent='🎉 '+current.w;
+      setTimeout(()=>overlay.classList.add('show'),400);
+    }else{
+      // wrong
+      slotsEl.querySelectorAll('.slot').forEach(s=>{s.style.background='#fee2e2';setTimeout(()=>s.style.background='',500)});
+      setTimeout(()=>{answer=[];document.querySelectorAll('.tile').forEach(t=>t.classList.remove('used'));render()},600);
+    }
+  }
+}
+function render(){
+  slotsEl.querySelectorAll('.slot').forEach((s,i)=>{
+    s.textContent=answer[i]||'';s.classList.toggle('filled',!!answer[i]);
+  });
+}
+document.getElementById('shuffle').onclick=()=>{
+  const tiles=[...poolEl.children];shuffle(tiles);tiles.forEach(t=>poolEl.appendChild(t));
+};
+document.getElementById('skip').onclick=()=>{currentWordNum++;loadWord()};
+document.getElementById('next').onclick=()=>{currentWordNum++;loadWord()};
+loadWord();
+</script>
+</body>
+</html>

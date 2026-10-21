@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Bingo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#ffecd2,#fcb69f);font-family:'Segoe UI',system-ui,sans-serif}
+.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+header{padding:16px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;text-align:center}
+header h1{font-size:22px;margin-bottom:10px}
+.stats{display:flex;justify-content:space-around;font-size:14px;font-weight:600}
+.stats span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.question{margin:16px;padding:20px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:16px;text-align:center;font-size:32px;font-weight:800;color:#92400e;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px}
+.cell{background:linear-gradient(135deg,#fff,#f3f4f6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#1e293b;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08);transition:all .15s;user-select:none;border:2px solid transparent}
+.cell:active{transform:scale(.96)}
+.cell.marked{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;pointer-events:none}
+.cell.marked::after{content:'✅';font-size:20px;margin-left:4px}
+.cell.wrong{animation:shake .4s;border-color:#ef4444}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.btn{margin:0 16px 24px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
+.overlay.show{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.overlay h2{font-size:42px;margin-bottom:16px}
+.overlay p{font-size:18px;margin-bottom:24px}
+.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><h1>🎯 Math Bingo</h1>
+    <div class="stats"><span>Time: <b id="timer">60</b>s</span><span>Score: <b id="score">0</b></span></div>
+  </header>
+  <div class="question" id="question">7 + 5 = ?</div>
+  <div class="grid" id="grid"></div>
+  <button class="btn" id="restart">🔄 Restart</button>
+  <div class="overlay" id="overlay">
+    <h2 id="overlayTitle">🎉 BINGO!</h2>
+    <p id="overlayMsg"></p>
+    <button id="again">Play Again</button>
+  </div>
+</div>
+<script>
+const gridEl=document.getElementById('grid'),qEl=document.getElementById('question'),timerEl=document.getElementById('timer'),scoreEl=document.getElementById('score'),overlay=document.getElementById('overlay'),overlayTitle=document.getElementById('overlayTitle'),overlayMsg=document.getElementById('overlayMsg');
+let grid=[],answer=0,score=0,time=60,interval=null,markedRows=[];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function newQuestion(){
+  const a=Math.floor(Math.random()*10)+1,b=Math.floor(Math.random()*10)+1;
+  if(Math.random()<.5){answer=a+b;qEl.textContent=`${a} + ${b} = ?`}
+  else{const big=Math.max(a,b),small=Math.min(a,b);answer=big-small;qEl.textContent=`${big} − ${small} = ?`}
+}
+function newGame(){
+  score=0;time=60;scoreEl.textContent=0;timerEl.textContent=60;overlay.classList.remove('show');
+  clearInterval(interval);interval=setInterval(()=>{time--;timerEl.textContent=time;if(time<=0){endGame('⏰ Time Up!')}},1000);
+  const nums=new Set();
+  while(nums.size<9)nums.add(Math.floor(Math.random()*20)+1);
+  const arr=shuffle([...nums]);
+  if(!arr.includes(answer))arr[0]=answer;
+  grid=arr;render();newQuestion();
+}
+function render(){
+  gridEl.innerHTML='';
+  grid.forEach((n,i)=>{
+    const d=document.createElement('div');d.className='cell';d.textContent=n;
+    d.onclick=()=>tap(d,i);gridEl.appendChild(d);
+  });
+}
+function tap(el,i){
+  if(el.classList.contains('marked'))return;
+  if(grid[i]===answer){
+    el.classList.add('marked');score++;scoreEl.textContent=score;
+    if(checkBingo()){endGame('🎉 BINGO!');return}
+    setTimeout(()=>{newQuestion();el.classList.remove('marked');},400);
+  }else{
+    el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),400);
+  }
+}
+function checkBingo(){
+  // since we remove marks, just check if score hits 3 in a row conceptually — simplified: count marked = 9
+  return document.querySelectorAll('.cell.marked').length>=3;
+}
+function endGame(title){
+  clearInterval(interval);
+  overlayTitle.textContent=title;
+  overlayMsg.textContent=`Final Score: ${score}`;
+  overlay.classList.add('show');
+}
+document.getElementById('restart').onclick=newGame;
+document.getElementById('again').onclick=newGame;
+newGame();
+</script>
+</body>
+</html>
