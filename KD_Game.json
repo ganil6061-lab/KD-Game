@@ -1,73 +1,73 @@
 [
   {
     "name": "Memory Match",
-    "description": "https://ganil6061-lab.github.io/KD-Game/memory_match.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/memory_match.html",
     "category": "Memory",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/memorymatch.png"
   },
   {
     "name": "Simon Says",
-    "description": "https://ganil6061-lab.github.io/KD-Game/simon_says.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/simon_says.html",
     "category": "Memory",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/simonsays.png"
   },
   {
     "name": "I Spy",
-    "description": "https://ganil6061-lab.github.io/KD-Game/i_spy.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/i_spy.html",
     "category": "Memory",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/ispy.png"
   },
   {
     "name": "Kids Sudoku",
-    "description": "https://ganil6061-lab.github.io/KD-Game/kids_sudoku.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/kids_sudoku.html",
     "category": "Math",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/kidssudoku.png"
   },
   {
     "name": "Math Bingo",
-    "description": "https://ganil6061-lab.github.io/KD-Game/math_bingo.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/math_bingo.html",
     "category": "Math",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/mathbingo.png"
   },
   {
     "name": "Tangram Builder",
-    "description": "https://ganil6061-lab.github.io/KD-Game/tangram_builder.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/tangram_builder.html",
     "category": "Math",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/tangram.png"
   },
   {
     "name": "Word Builder",
-    "description": "https://ganil6061-lab.github.io/KD-Game/word_builder.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/word_builder.html",
     "category": "Language",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/wordbuilder.png"
   },
   {
     "name": "Story Cubes",
-    "description": "https://ganil6061-lab.github.io/KD-Game/story_cubes.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/story_cubes.html",
     "category": "Language",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/storycubes.png"
   },
   {
     "name": "Rhyming Words",
-    "description": "https://ganil6061-lab.github.io/KD-Game/rhyming_words.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/rhyming_words.html",
     "category": "Language",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/rhymingwords.png"
   },
   {
     "name": "Mini Chess",
-    "description": "https://ganil6061-lab.github.io/KD-Game/mini_chess.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/mini_chess.html",
     "category": "Strategy",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/minichess.png"
   },
   {
     "name": "Jigsaw Puzzle",
-    "description": "https://ganil6061-lab.github.io/KD-Game/jigsaw_puzzle.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/jigsaw_puzzle.html",
     "category": "Strategy",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/jigsawpuzzle.png"
   },
   {
     "name": "Connect 4",
-    "description": "https://ganil6061-lab.github.io/KD-Game/connect4.html",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/connect4.html",
     "category": "Strategy",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/connect4.png"
   }
