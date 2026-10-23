@@ -42,12 +42,6 @@
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/wordbuilder.png"
   },
   {
-    "name": "Story Cubes",
-    "description": "https://ganil6061-lab.github.io/KD-Game/game/story_cubes.html",
-    "category": "Language",
-    "img": "https://ganil6061-lab.github.io/KD-Game/icon/storycubes.png"
-  },
-  {
     "name": "Rhyming Words",
     "description": "https://ganil6061-lab.github.io/KD-Game/game/rhyming_words.html",
     "category": "Language",
@@ -58,12 +52,6 @@
     "description": "https://ganil6061-lab.github.io/KD-Game/game/mini_chess.html",
     "category": "Strategy",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/minichess.png"
-  },
-  {
-    "name": "Jigsaw Puzzle",
-    "description": "https://ganil6061-lab.github.io/KD-Game/game/jigsaw_puzzle.html",
-    "category": "Strategy",
-    "img": "https://ganil6061-lab.github.io/KD-Game/icon/jigsawpuzzle.png"
   },
   {
     "name": "Connect 4",
