@@ -1,142 +1,488 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connect 4</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#89f7fe,#66a6ff);font-family:'Segoe UI',system-ui,sans-serif}
-.app{width:100%;max-width:420px;height:746px;max-height:100vh;background:#f0f9ff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
-header{padding:16px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;text-align:center}
-header h1{font-size:22px;margin-bottom:10px}
-.turn{font-size:16px;font-weight:700;padding:8px 20px;background:rgba(255,255,255,.2);border-radius:20px;display:inline-block}
-.scores{display:flex;justify-content:space-around;font-size:14px;font-weight:600;margin-top:10px}
-.scores span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
-.board-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
-.board{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:6px;background:#1e40af;padding:10px;border-radius:16px;width:100%;max-width:360px;aspect-ratio:7/6;box-shadow:0 10px 30px rgba(0,0,0,.3)}
-.slot{background:#f0f9ff;border-radius:50%;cursor:pointer;transition:all .15s;position:relative}
-.slot:hover{background:#dbeafe}
-.slot.red{background:radial-gradient(circle at 30% 30%,#f87171,#dc2626);box-shadow:inset 0 -4px 8px rgba(0,0,0,.3)}
-.slot.yellow{background:radial-gradient(circle at 30% 30%,#fde047,#eab308);box-shadow:inset 0 -4px 8px rgba(0,0,0,.3)}
-.slot.win{animation:winPulse .6s infinite}
-@keyframes winPulse{50%{box-shadow:0 0 20px 4px #fff,inset 0 -4px 8px rgba(0,0,0,.3)}}
-.controls{display:flex;gap:10px;padding:0 20px 24px}
-.btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
-.btn.new{background:linear-gradient(135deg,#22c55e,#16a34a)}
-.btn.hint{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:20}
-.overlay.show{display:flex;animation:fade .3s}
-@keyframes fade{from{opacity:0}}
-.overlay h2{font-size:42px;margin-bottom:16px}
-.overlay button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pocket Connect 4 - Mobile Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #090d16;
+            color: #f1f5f9;
+            overflow: hidden;
+            touch-action: none;
+        }
+        /* 9:16 Mobile Container Wrapper */
+        .mobile-frame {
+            width: 100vw;
+            height: 100vh;
+            max-width: 440px;
+            max-height: 900px;
+            margin: auto;
+            position: relative;
+            background: linear-gradient(145deg, #131c31 0%, #0a0f1d 100%);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+        @media (min-width: 441px) {
+            .mobile-frame {
+                height: 94vh;
+                border-radius: 36px;
+                border: 6px solid #1e293b;
+            }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            70% { transform: scale(1.03); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        /* Connect 4 Board styling */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 8px;
+            background-color: #1e3a8a;
+            padding: 12px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0,0,0,0.6), inset 0 4px 10px rgba(0,0,0,0.4);
+            border: 4px solid #3b82f6;
+            width: 100%;
+            aspect-ratio: 7 / 6;
+        }
+        .cell {
+            background-color: #090d16;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.6);
+            transition: background-color 0.15s ease;
+        }
+        .cell.player-1::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.5);
+            animation: dropPiece 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .cell.player-2::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: radial-gradient(circle at 30% 30%, #fbbf24, #d97706);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(217, 119, 6, 0.5);
+            animation: dropPiece 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes dropPiece {
+            0% { transform: translateY(-300px); opacity: 0; }
+            60% { transform: translateY(15px); opacity: 1; }
+            80% { transform: translateY(-8px); }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .winning-cell::after {
+            filter: brightness(1.3);
+            box-shadow: 0 0 15px #ffffff, inset 0 0 10px rgba(255,255,255,0.8) !important;
+            animation: pulseWin 0.8s infinite alternate !important;
+        }
+        @keyframes pulseWin {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
+    </style>
 </head>
-<body>
-<div class="app">
-  <header>
-    <h1>🔴 Connect 4</h1>
-    <div class="turn" id="turn">🔴 Red's Turn</div>
-    <div class="scores"><span>🔴 <b id="redScore">0</b></span><span>🟡 <b id="yellowScore">0</b></span></div>
-  </header>
-  <div class="board-wrap"><div class="board" id="board"></div></div>
-  <div class="controls">
-    <button class="btn new" id="newGame">🔄 New Game</button>
-    <button class="btn hint" id="hint">💡 Hint</button>
-  </div>
-  <div class="overlay" id="overlay">
-    <h2 id="overlayTitle">🔴 Red Wins!</h2>
-    <button id="again">Play Again</button>
-  </div>
-</div>
-<script>
-const ROWS=6,COLS=7;
-let board=[],turn='red',gameOver=false,redScore=0,yellowScore=0,aiMode=false;
-const boardEl=document.getElementById('board'),turnEl=document.getElementById('turn'),overlay=document.getElementById('overlay'),overlayTitle=document.getElementById('overlayTitle');
-function init(){
-  board=Array.from({length:ROWS},()=>Array(COLS).fill(''));
-  turn='red';gameOver=false;
-  overlay.classList.remove('show');
-  render();
-  updateTurn();
-}
-function render(){
-  boardEl.innerHTML='';
-  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-    const s=document.createElement('div');
-    s.className='slot'+(board[r][c]?' '+board[r][c]:'');
-    s.dataset.r=r;s.dataset.c=c;
-    s.onclick=()=>drop(c);
-    boardEl.appendChild(s);
-  }
-}
-function drop(c){
-  if(gameOver)return;
-  if(board[0][c]!=='')return;
-  let r=ROWS-1;
-  while(r>=0&&board[r][c]!=='')r--;
-  board[r][c]=turn;
-  const slot=boardEl.children[r*COLS+c];
-  slot.classList.add(turn);
-  const winCells=checkWin(r,c,turn);
-  if(winCells){
-    gameOver=true;
-    winCells.forEach(([wr,wc])=>boardEl.children[wr*COLS+wc].classList.add('win'));
-    if(turn==='red'){redScore++;document.getElementById('redScore').textContent=redScore}
-    else{yellowScore++;document.getElementById('yellowScore').textContent=yellowScore}
-    setTimeout(()=>{
-      overlayTitle.textContent=(turn==='red'?'🔴 Red':'🟡 Yellow')+' Wins! 🎉';
-      overlay.classList.add('show');
-    },600);
-    return;
-  }
-  if(board[0].every(c=>c!=='')){gameOver=true;setTimeout(()=>{overlayTitle.textContent='🤝 Draw!';overlay.classList.add('show')},400);return}
-  turn=turn==='red'?'yellow':'red';
-  updateTurn();
-}
-function checkWin(r,c,p){
-  const dirs=[[0,1],[1,0],[1,1],[1,-1]];
-  for(const [dr,dc] of dirs){
-    const cells=[[r,c]];
-    for(let s=1;s<4;s++){const nr=r+dr*s,nc=c+dc*s;if(nr<0||nr>=ROWS||nc<0||nc>=COLS||board[nr][nc]!==p)break;cells.push([nr,nc])}
-    for(let s=1;s<4;s++){const nr=r-dr*s,nc=c-dc*s;if(nr<0||nr>=ROWS||nc<0||nc>=COLS||board[nr][nc]!==p)break;cells.push([nr,nc])}
-    if(cells.length>=4)return cells;
-  }
-  return null;
-}
-function updateTurn(){
-  turnEl.textContent=(turn==='red'?'🔴 Red':'🟡 Yellow')+"'s Turn";
-}
-document.getElementById('newGame').onclick=init;
-document.getElementById('again').onclick=init;
-document.getElementById('hint').onclick=()=>{
-  // find a winning or blocking column
-  for(let c=0;c<COLS;c++){
-    if(board[0][c]!=='')continue;
-    let r=ROWS-1;while(r>=0&&board[r][c]!=='')r--;
-    board[r][c]=turn;
-    if(checkWin(r,c,turn)){board[r][c]='';highlightCol(c);return}
-    board[r][c]='';
-  }
-  // block opponent
-  const opp=turn==='red'?'yellow':'red';
-  for(let c=0;c<COLS;c++){
-    if(board[0][c]!=='')continue;
-    let r=ROWS-1;while(r>=0&&board[r][c]!=='')r--;
-    board[r][c]=opp;
-    if(checkWin(r,c,opp)){board[r][c]='';highlightCol(c);return}
-    board[r][c]='';
-  }
-  highlightCol(Math.floor(Math.random()*COLS));
-};
-function highlightCol(c){
-  for(let r=0;r<ROWS;r++){
-    const s=boardEl.children[r*COLS+c];
-    s.style.boxShadow='0 0 0 3px #fbbf24';
-    setTimeout(()=>s.style.boxShadow='',1500);
-  }
-}
-init();
-</script>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="mobile-frame">
+        <!-- Top App Bar -->
+        <header class="flex items-center justify-between px-5 py-3 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 z-20">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-lg">
+                    🔴
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white tracking-wide leading-tight">Connect Four</h1>
+                    <p id="game-mode-label" class="text-xs text-blue-400 font-medium">Player vs AI (Smart)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-mode" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-semibold text-slate-300 transition-all flex items-center gap-1.5" title="Switch Mode">
+                    <i class="fa-solid fa-robot"></i> <span id="mode-text">vs Bot</span>
+                </button>
+                <button id="btn-restart" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 flex items-center justify-center text-slate-300 text-sm transition-all" title="New Game">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="flex-1 flex flex-col items-center justify-between px-5 py-4 overflow-hidden">
+            
+            <!-- Score & Status Bar -->
+            <div class="w-full grid grid-cols-2 gap-3">
+                <div class="bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500 shadow-md shadow-red-500/50"></div>
+                        <span id="p1-label" class="text-xs font-semibold text-slate-300">You (Red)</span>
+                    </div>
+                    <span id="score-p1" class="text-sm font-bold text-white">0</span>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 px-4 py-2 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-amber-500 shadow-md shadow-amber-500/50"></div>
+                        <span id="p2-label" class="text-xs font-semibold text-slate-300">Bot (Yellow)</span>
+                    </div>
+                    <span id="score-p2" class="text-sm font-bold text-white">0</span>
+                </div>
+            </div>
+
+            <!-- Connect 4 Board Container -->
+            <div class="w-full max-w-[360px] my-auto">
+                <div id="board" class="board-grid"></div>
+            </div>
+
+            <!-- Current Turn Indicator -->
+            <div id="status-message" class="w-full text-center text-xs font-medium text-slate-300 bg-slate-900/60 border border-slate-800 py-3 rounded-2xl flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bullseye text-blue-400"></i> Red's turn
+            </div>
+        </main>
+
+        <!-- Bottom Game Toolbar -->
+        <footer class="px-5 py-3 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 flex items-center justify-between z-20">
+            <button id="btn-undo" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-rotate-left"></i> Undo Move
+            </button>
+        </footer>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal-gameover" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl animate-pop">
+            <div id="modal-icon" class="w-20 h-20 bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded-3xl mx-auto flex items-center justify-center text-4xl mb-4 shadow-xl">
+                🏆
+            </div>
+            <h2 id="modal-title" class="text-2xl font-bold text-white mb-1">Victory!</h2>
+            <p id="modal-subtitle" class="text-slate-400 text-sm mb-6">Red player wins the game.</p>
+            <button id="modal-restart" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-semibold rounded-2xl shadow-lg shadow-blue-600/30 transition-all">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- CONNECT 4 GAME ENGINE --- */
+        const ROWS = 6;
+        const COLS = 7;
+        let board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+        
+        let currentPlayer = 1; // 1: Red (User), 2: Yellow (Bot/P2)
+        let gameMode = 'ai'; // 'ai' or 'pvp'
+        let gameOver = false;
+        let moveHistory = [];
+        let scores = { p1: 0, p2: 0 };
+
+        const boardEl = document.getElementById('board');
+        const statusMsg = document.getElementById('status-message');
+        const modalGameOver = document.getElementById('modal-gameover');
+        const modalTitle = document.getElementById('modal-title');
+        const modalSubtitle = document.getElementById('modal-subtitle');
+        const modalIcon = document.getElementById('modal-icon');
+        const btnUndo = document.getElementById('btn-undo');
+        const scoreP1El = document.getElementById('score-p1');
+        const scoreP2El = document.getElementById('score-p2');
+
+        function initBoard() {
+            boardEl.innerHTML = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (board[r][c] === 1) cell.classList.add('player-1');
+                    if (board[r][c] === 2) cell.classList.add('player-2');
+                    
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.addEventListener('click', () => handleColumnClick(c));
+                    boardEl.appendChild(cell);
+                }
+            }
+            updateStatus();
+        }
+
+        function handleColumnClick(col) {
+            if (gameOver) return;
+            if (gameMode === 'ai' && currentPlayer === 2) return; // Block input during AI turn
+
+            // Find lowest available row in this column
+            let targetRow = -1;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][col] === 0) {
+                    targetRow = r;
+                    break;
+                }
+            }
+
+            if (targetRow === -1) return; // Column full
+
+            makeMove(targetRow, col, currentPlayer);
+        }
+
+        function makeMove(row, col, player) {
+            board[row][col] = player;
+            moveHistory.push({ row, col, player });
+            btnUndo.disabled = false;
+
+            const winResult = checkWin(row, col, player);
+            if (winResult) {
+                gameOver = true;
+                highlightWinningCells(winResult);
+                endGame(player);
+                return;
+            }
+
+            if (isBoardFull()) {
+                gameOver = true;
+                endGame(0); // Draw
+                return;
+            }
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            initBoard();
+
+            // Trigger AI Move if in AI mode and it's Bot's turn
+            if (gameMode === 'ai' && currentPlayer === 2 && !gameOver) {
+                statusMsg.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-400"></i> Bot is thinking...`;
+                setTimeout(makeAIMove, 450);
+            }
+        }
+
+        /* --- SMART AI HEURISTIC ENGINE --- */
+        function makeAIMove() {
+            if (gameOver) return;
+            
+            // AI strategy: 
+            // 1. Check if AI can win in 1 move
+            // 2. Check if player can win in 1 move (block them)
+            // 3. Pick best strategic column (center preference)
+            
+            let bestCol = getBestColumn();
+            
+            // Find lowest row for selected column
+            let targetRow = -1;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][bestCol] === 0) {
+                    targetRow = r;
+                    break;
+                }
+            }
+
+            if (targetRow !== -1) {
+                makeMove(targetRow, bestCol, 2);
+            }
+        }
+
+        function getBestColumn() {
+            // 1. Win check for AI (Player 2)
+            for (let c = 0; c < COLS; c++) {
+                let r = getAvailableRow(c);
+                if (r !== -1) {
+                    board[r][c] = 2;
+                    if (checkWin(r, c, 2)) {
+                        board[r][c] = 0;
+                        return c;
+                    }
+                    board[r][c] = 0;
+                }
+            }
+
+            // 2. Block Player (Player 1) winning move
+            for (let c = 0; c < COLS; c++) {
+                let r = getAvailableRow(c);
+                if (r !== -1) {
+                    board[r][c] = 1;
+                    if (checkWin(r, c, 1)) {
+                        board[r][c] = 0;
+                        return c;
+                    }
+                    board[r][c] = 0;
+                }
+            }
+
+            // 3. Preference for center columns
+            const colOrder = [3, 2, 4, 1, 5, 0, 6];
+            for (let c of colOrder) {
+                if (getAvailableRow(c) !== -1) {
+                    return c;
+                }
+            }
+            return 0;
+        }
+
+        function getAvailableRow(col) {
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][col] === 0) return r;
+            }
+            return -1;
+        }
+
+        /* --- WIN CHECK ALGORITHM --- */
+        function checkWin(r, c, player) {
+            const directions = [
+                { dr: 0, dc: 1 },  // Horizontal
+                { dr: 1, dc: 0 },  // Vertical
+                { dr: 1, dc: 1 },  // Diagonal Down-Right
+                { dr: 1, dc: -1 }  // Diagonal Down-Left
+            ];
+
+            for (let dir of directions) {
+                let winningCells = [{ r, c }];
+
+                // Check forward
+                let step = 1;
+                while (true) {
+                    let nr = r + dir.dr * step;
+                    let nc = c + dir.dc * step;
+                    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS || board[nr][nc] !== player) break;
+                    winningCells.push({ r: nr, c: nc });
+                    step++;
+                }
+
+                // Check backward
+                step = 1;
+                while (true) {
+                    let nr = r - dir.dr * step;
+                    let nc = c - dir.dc * step;
+                    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS || board[nr][nc] !== player) break;
+                    winningCells.push({ r: nr, c: nc });
+                    step++;
+                }
+
+                if (winningCells.length >= 4) {
+                    return winningCells;
+                }
+            }
+            return null;
+        }
+
+        function highlightWinningCells(cells) {
+            cells.forEach(cell => {
+                const cellEl = document.querySelector(`[data-row="${cell.r}"][data-col="${cell.c}"]`);
+                if (cellEl) cellEl.classList.add('winning-cell');
+            });
+        }
+
+        function isBoardFull() {
+            return board[0].every(cell => cell !== 0);
+        }
+
+        function updateStatus() {
+            if (currentPlayer === 1) {
+                statusMsg.innerHTML = `<div class="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div> Red's turn (You)`;
+            } else {
+                statusMsg.innerHTML = `<div class="w-3 h-3 rounded-full bg-amber-500 shadow-sm"></div> ${gameMode === 'ai' ? 'Bot is thinking...' : "Yellow's turn"}`;
+            }
+            btnUndo.disabled = moveHistory.length === 0 || gameOver;
+        }
+
+        function endGame(winner) {
+            let title = "It's a Draw!";
+            let subtitle = "The board is completely full.";
+            let icon = "🤝";
+
+            if (winner === 1) {
+                scores.p1++;
+                scoreP1El.innerText = scores.p1;
+                title = "Red Wins!";
+                subtitle = "Brilliant four-in-a-row connection!";
+                icon = "👑";
+            } else if (winner === 2) {
+                scores.p2++;
+                scoreP2El.innerText = scores.p2;
+                title = gameMode === 'ai' ? "Bot Wins!" : "Yellow Wins!";
+                subtitle = gameMode === 'ai' ? "The AI outsmarted your move." : "Fantastic four-in-a-row victory!";
+                icon = gameMode === 'ai' ? "🤖" : "👑";
+            }
+
+            modalTitle.innerText = title;
+            modalSubtitle.innerText = subtitle;
+            modalIcon.innerText = icon;
+            setTimeout(() => modalGameOver.classList.remove('hidden'), 400);
+        }
+
+        /* --- CONTROLS & LISTENERS --- */
+        const btnMode = document.getElementById('btn-mode');
+        const modeText = document.getElementById('mode-text');
+        const gameModeLabel = document.getElementById('game-mode-label');
+        const p1Label = document.getElementById('p1-label');
+        const p2Label = document.getElementById('p2-label');
+
+        btnMode.addEventListener('click', () => {
+            gameMode = gameMode === 'ai' ? 'pvp' : 'ai';
+            if (gameMode === 'ai') {
+                modeText.innerText = "vs Bot";
+                gameModeLabel.innerText = "Player vs AI (Smart)";
+                p1Label.innerText = "You (Red)";
+                p2Label.innerText = "Bot (Yellow)";
+                btnMode.innerHTML = `<i class="fa-solid fa-robot"></i> <span id="mode-text">vs Bot</span>`;
+            } else {
+                modeText.innerText = "2 Player";
+                gameModeLabel.innerText = "Pass and Play (2P)";
+                p1Label.innerText = "Player 1 (Red)";
+                p2Label.innerText = "Player 2 (Yellow)";
+                btnMode.innerHTML = `<i class="fa-solid fa-user-group"></i> <span id="mode-text">2 Player</span>`;
+            }
+            resetGame();
+        });
+
+        function resetGame() {
+            board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+            currentPlayer = 1;
+            gameOver = false;
+            moveHistory = [];
+            modalGameOver.classList.add('hidden');
+            initBoard();
+        }
+
+        document.getElementById('btn-restart').addEventListener('click', resetGame);
+        document.getElementById('modal-restart').addEventListener('click', resetGame);
+
+        // Undo move
+        btnUndo.addEventListener('click', () => {
+            if (moveHistory.length === 0 || gameOver) return;
+
+            // In AI mode, undo both AI and player moves if possible
+            let undoCount = gameMode === 'ai' && moveHistory.length >= 2 ? 2 : 1;
+            
+            for (let i = 0; i < undoCount; i++) {
+                if (moveHistory.length > 0) {
+                    const lastMove = moveHistory.pop();
+                    board[lastMove.row][lastMove.col] = 0;
+                    currentPlayer = lastMove.player;
+                }
+            }
+            gameOver = false;
+            initBoard();
+        });
+
+        // Initial launch
+        window.onload = () => {
+            initBoard();
+        };
+    </script>
 </body>
 </html>
