@@ -20,12 +20,12 @@ header h1{font-size:24px;margin-bottom:12px}
 .pad:active{transform:scale(.97)}
 .btn{margin:16px 24px 24px;padding:16px;border:none;border-radius:16px;background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(74,222,128,.4)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.overlay{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:10}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:10}
 .overlay.show{display:flex;animation:fade .3s}
 @keyframes fade{from{opacity:0}}
-.overlay h2{font-size:42px;margin-bottom:16px}
-.overlay p{font-size:20px;margin-bottom:24px}
-.overlay button{padding:14px 36px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.overlay h2{font-size:42px;margin-bottom:16px;color:#ef4444}
+.overlay p{font-size:20px;margin-bottom:12px}
+.overlay .back-hint{font-size:14px;color:#94a3b8;font-style:italic}
 </style>
 </head>
 <body>
@@ -44,46 +44,63 @@ header h1{font-size:24px;margin-bottom:12px}
   <div class="overlay" id="overlay">
     <h2>💥 Game Over!</h2>
     <p id="finalScore"></p>
-    <button id="retry">Try Again</button>
+    <p class="back-hint">Use your device's back button to exit.</p>
   </div>
 </div>
 <script>
 const pads=document.querySelectorAll('.pad'),statusEl=document.getElementById('status'),levelEl=document.getElementById('level'),bestEl=document.getElementById('best'),overlay=document.getElementById('overlay'),finalScore=document.getElementById('finalScore'),startBtn=document.getElementById('start');
-let sequence=[],playerIdx=0,level=0,playing=false,canClick=false;
+let sequence=[],playerIdx=0,level=0,playing=false,canClick=false,activeInterval=null;
 let best=parseInt(localStorage.getItem('simonBest')||'0');bestEl.textContent=best;
 const colors=['red','green','blue','yellow'];
+
 function flash(color,dur=400){
-  const p=document.querySelector(`.pad.${color}`);p.classList.add('active');
+  const p=document.querySelector(`.pad.${color}`);
+  if(!p) return;
+  p.classList.add('active');
   setTimeout(()=>p.classList.remove('active'),dur);
 }
+
 function nextRound(){
+  if(!playing) return;
   level++;levelEl.textContent=level;playerIdx=0;
   sequence.push(colors[Math.floor(Math.random()*4)]);
   statusEl.textContent='Watch carefully...';canClick=false;
   let i=0;
-  const iv=setInterval(()=>{
-    if(i>=sequence.length){clearInterval(iv);canClick=true;statusEl.textContent='Your turn!';return}
-    flash(sequence[i]);i++;
+  activeInterval=setInterval(()=>{
+    if(!playing) { clearInterval(activeInterval); return; }
+    if(i>=sequence.length){clearInterval(activeInterval); canClick=true; statusEl.textContent='Your turn!'; return;}
+    flash(sequence[i]); i++;
   },700);
 }
+
 function handleClick(e){
-  if(!canClick)return;
+  if(!canClick || !playing) return;
   const color=e.currentTarget.dataset.color;
   flash(color,250);
   if(color===sequence[playerIdx]){
     playerIdx++;
     if(playerIdx===sequence.length){canClick=false;statusEl.textContent='✅ Correct!';setTimeout(nextRound,1000)}
   }else{
-    canClick=false;playing=false;
-    if(level-1>best){best=level-1;localStorage.setItem('simonBest',best);bestEl.textContent=best}
-    finalScore.textContent=`You reached Level ${level}`;
-    overlay.classList.add('show');
+    triggerGameOver();
   }
 }
+
+function triggerGameOver(){
+  playing=false;canClick=false;
+  if(activeInterval) clearInterval(activeInterval);
+  statusEl.textContent='Game Over';
+  if(level-1>best){best=level-1;localStorage.setItem('simonBest',best);bestEl.textContent=best}
+  finalScore.textContent=`Final Score / Level: ${Math.max(0, level-1)}`;
+  overlay.classList.add('show');
+}
+
 pads.forEach(p=>p.addEventListener('click',handleClick));
-function startGame(){sequence=[];level=0;overlay.classList.remove('show');startBtn.disabled=true;playing=true;nextRound()}
+
+function startGame(){
+  sequence=[];level=0;overlay.classList.remove('show');startBtn.disabled=true;playing=true;nextRound();
+}
+
 startBtn.onclick=startGame;
-document.getElementById('retry').onclick=()=>{startBtn.disabled=false;startGame()};
 </script>
 </body>
 </html>
