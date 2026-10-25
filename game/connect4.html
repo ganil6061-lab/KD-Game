@@ -172,15 +172,31 @@
         </footer>
     </div>
 
-    <!-- Game Over Modal -->
-    <div id="modal-gameover" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <!-- Game Over Modal (Frozen Screen with Final Score, No Restart Buttons) -->
+    <div id="modal-gameover" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl animate-pop">
             <div id="modal-icon" class="w-20 h-20 bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded-3xl mx-auto flex items-center justify-center text-4xl mb-4 shadow-xl">
                 🏆
             </div>
-            <h2 id="modal-title" class="text-2xl font-bold text-white mb-1">Victory!</h2>
-            <p id="modal-subtitle" class="text-slate-400 text-sm mb-6">Red player wins the game.</p>
-            <button id="modal-restart" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-semibold rounded-2xl shadow-lg shadow-blue-600/30 transition-all">Play Again</button>
+            <h2 id="modal-title" class="text-2xl font-bold text-white mb-1">Game Over</h2>
+            <p id="modal-subtitle" class="text-slate-400 text-sm mb-4">Red player wins the game.</p>
+            
+            <!-- Final Score Display -->
+            <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-3 mb-6 flex justify-around items-center">
+                <div>
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Red Score</div>
+                    <div id="final-score-p1" class="text-lg font-bold text-red-400">0</div>
+                </div>
+                <div class="h-8 w-px bg-slate-800"></div>
+                <div>
+                    <div class="text-[10px] text-slate-400 uppercase font-semibold">Yellow Score</div>
+                    <div id="final-score-p2" class="text-lg font-bold text-amber-400">0</div>
+                </div>
+            </div>
+
+            <div class="text-xs text-slate-500 italic">
+                Use your device's back button to exit.
+            </div>
         </div>
     </div>
 
@@ -195,6 +211,7 @@
         let gameOver = false;
         let moveHistory = [];
         let scores = { p1: 0, p2: 0 };
+        let aiTimeoutId = null;
 
         const boardEl = document.getElementById('board');
         const statusMsg = document.getElementById('status-message');
@@ -205,6 +222,8 @@
         const btnUndo = document.getElementById('btn-undo');
         const scoreP1El = document.getElementById('score-p1');
         const scoreP2El = document.getElementById('score-p2');
+        const finalScoreP1El = document.getElementById('final-score-p1');
+        const finalScoreP2El = document.getElementById('final-score-p2');
 
         function initBoard() {
             boardEl.innerHTML = '';
@@ -243,6 +262,8 @@
         }
 
         function makeMove(row, col, player) {
+            if (gameOver) return;
+            
             board[row][col] = player;
             moveHistory.push({ row, col, player });
             btnUndo.disabled = false;
@@ -267,7 +288,7 @@
             // Trigger AI Move if in AI mode and it's Bot's turn
             if (gameMode === 'ai' && currentPlayer === 2 && !gameOver) {
                 statusMsg.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-400"></i> Bot is thinking...`;
-                setTimeout(makeAIMove, 450);
+                aiTimeoutId = setTimeout(makeAIMove, 450);
             }
         }
 
@@ -275,14 +296,8 @@
         function makeAIMove() {
             if (gameOver) return;
             
-            // AI strategy: 
-            // 1. Check if AI can win in 1 move
-            // 2. Check if player can win in 1 move (block them)
-            // 3. Pick best strategic column (center preference)
-            
             let bestCol = getBestColumn();
             
-            // Find lowest row for selected column
             let targetRow = -1;
             for (let r = ROWS - 1; r >= 0; r--) {
                 if (board[r][bestCol] === 0) {
@@ -391,6 +406,7 @@
         }
 
         function updateStatus() {
+            if (gameOver) return;
             if (currentPlayer === 1) {
                 statusMsg.innerHTML = `<div class="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div> Red's turn (You)`;
             } else {
@@ -399,29 +415,45 @@
             btnUndo.disabled = moveHistory.length === 0 || gameOver;
         }
 
+        /* --- STRICT GAME OVER STATE MANAGEMENT --- */
         function endGame(winner) {
-            let title = "It's a Draw!";
+            // 1. Immediately halt any ongoing timers/AI loops or pending inputs
+            gameOver = true;
+            if (aiTimeoutId) {
+                clearTimeout(aiTimeoutId);
+                aiTimeoutId = null;
+            }
+
+            let title = "Game Over - Draw";
             let subtitle = "The board is completely full.";
             let icon = "🤝";
 
             if (winner === 1) {
                 scores.p1++;
                 scoreP1El.innerText = scores.p1;
-                title = "Red Wins!";
+                title = "Game Over - Red Wins!";
                 subtitle = "Brilliant four-in-a-row connection!";
                 icon = "👑";
             } else if (winner === 2) {
                 scores.p2++;
                 scoreP2El.innerText = scores.p2;
-                title = gameMode === 'ai' ? "Bot Wins!" : "Yellow Wins!";
+                title = gameMode === 'ai' ? "Game Over - Bot Wins!" : "Game Over - Yellow Wins!";
                 subtitle = gameMode === 'ai' ? "The AI outsmarted your move." : "Fantastic four-in-a-row victory!";
                 icon = gameMode === 'ai' ? "🤖" : "👑";
             }
 
+            // Update scores on frozen overlay
+            finalScoreP1El.innerText = scores.p1;
+            finalScoreP2El.innerText = scores.p2;
+
             modalTitle.innerText = title;
             modalSubtitle.innerText = subtitle;
             modalIcon.innerText = icon;
-            setTimeout(() => modalGameOver.classList.remove('hidden'), 400);
+
+            // Freeze the screen with clean message and score; no replay/restart buttons inside web view.
+            setTimeout(() => {
+                modalGameOver.classList.remove('hidden');
+            }, 400);
         }
 
         /* --- CONTROLS & LISTENERS --- */
@@ -432,6 +464,7 @@
         const p2Label = document.getElementById('p2-label');
 
         btnMode.addEventListener('click', () => {
+            if (gameOver) return; // Prevent changing mode after game over
             gameMode = gameMode === 'ai' ? 'pvp' : 'ai';
             if (gameMode === 'ai') {
                 modeText.innerText = "vs Bot";
@@ -450,6 +483,10 @@
         });
 
         function resetGame() {
+            if (aiTimeoutId) {
+                clearTimeout(aiTimeoutId);
+                aiTimeoutId = null;
+            }
             board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
             currentPlayer = 1;
             gameOver = false;
@@ -459,13 +496,11 @@
         }
 
         document.getElementById('btn-restart').addEventListener('click', resetGame);
-        document.getElementById('modal-restart').addEventListener('click', resetGame);
 
         // Undo move
         btnUndo.addEventListener('click', () => {
             if (moveHistory.length === 0 || gameOver) return;
 
-            // In AI mode, undo both AI and player moves if possible
             let undoCount = gameMode === 'ai' && moveHistory.length >= 2 ? 2 : 1;
             
             for (let i = 0; i < undoCount; i++) {
