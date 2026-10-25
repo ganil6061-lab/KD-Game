@@ -23,13 +23,12 @@ header h1{font-size:22px;margin-bottom:10px}
 @keyframes pop{50%{transform:rotateY(180deg) scale(1.15)}}
 .card.shake{animation:shake .4s}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.btn{margin:16px 20px 24px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#5b6ef5,#8b5cf6);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(91,110,245,.4)}
-.win{position:absolute;inset:0;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px;z-index:10}
+.win{position:absolute;inset:0;background:rgba(0,0,0,.82);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;z-index:10}
 .win.show{display:flex;animation:fade .4s}
 @keyframes fade{from{opacity:0}}
-.win h2{font-size:36px;margin-bottom:16px}
-.win p{font-size:18px;margin-bottom:24px}
-.win button{padding:14px 32px;border:none;border-radius:14px;background:#4ade80;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.win h2{font-size:36px;margin-bottom:12px}
+.win p{font-size:16px;opacity:0.85;margin-bottom:8px;line-height:1.5}
+.back-hint{font-size:13px;opacity:0.6;font-style:italic;margin-top:16px}
 </style>
 </head>
 <body>
@@ -39,20 +38,27 @@ header h1{font-size:22px;margin-bottom:10px}
     <div class="stats"><span>Moves: <b id="moves">0</b></span><span>Time: <b id="timer">0s</b></span></div>
   </header>
   <div class="grid" id="grid"></div>
-  <button class="btn" id="restart">🔄 Restart</button>
   <div class="win" id="win">
-    <h2>🎉 You Won!</h2>
+    <h2>🎉 Victory!</h2>
     <p id="winStats"></p>
-    <button id="again">Play Again</button>
+    <p class="back-hint">Use your device's back button to exit.</p>
   </div>
 </div>
 <script>
 const emojis=['🐶','🐱','🐰','🦊','🐼','🐸'];
-let cards=[],flipped=[],matched=0,moves=0,timer=0,interval=null,started=false;
+let cards=[],flipped=[],matched=0,moves=0,timer=0,interval=null,started=false,gameOver=false;
 const grid=document.getElementById('grid'),movesEl=document.getElementById('moves'),timerEl=document.getElementById('timer'),winEl=document.getElementById('win'),winStats=document.getElementById('winStats');
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
 function init(){
-  cards=shuffle([...emojis,...emojis]);matched=0;moves=0;flipped=[];timer=0;started=false;
+  cards=shuffle([...emojis,...emojis]);matched=0;moves=0;flipped=[];timer=0;started=false;gameOver=false;
   clearInterval(interval);movesEl.textContent=0;timerEl.textContent='0s';winEl.classList.remove('show');
   grid.innerHTML='';
   cards.forEach((e,i)=>{
@@ -61,7 +67,9 @@ function init(){
     c.addEventListener('click',()=>flip(c));grid.appendChild(c);
   });
 }
+
 function flip(card){
+  if(gameOver)return;
   if(!started){started=true;interval=setInterval(()=>{timer++;timerEl.textContent=timer+'s'},1000)}
   if(card.classList.contains('flipped')||card.classList.contains('matched')||flipped.length===2)return;
   card.classList.add('flipped');flipped.push(card);
@@ -77,12 +85,14 @@ function flip(card){
     }
   }
 }
+
 function win(){
-  clearInterval(interval);winStats.textContent=`Moves: ${moves} | Time: ${timer}s`;
+  gameOver=true;
+  clearInterval(interval);
+  winStats.textContent=`Final Score — Moves: ${moves} | Time: ${timer}s`;
   winEl.classList.add('show');
 }
-document.getElementById('restart').onclick=init;
-document.getElementById('again').onclick=init;
+
 init();
 </script>
 </body>
