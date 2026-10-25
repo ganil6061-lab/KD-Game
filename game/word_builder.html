@@ -184,7 +184,7 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.85);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -209,23 +209,9 @@
     to   { transform: scale(1);   opacity: 1; }
   }
   .win-card .big-emoji { font-size: 60px; margin-bottom: 6px; line-height: 1; }
-  .win-card h2 { margin: 0 0 8px; font-size: 22px; color: #22c55e; }
+  .win-card h2 { margin: 0 0 8px; font-size: 22px; color: #ef4444; }
   .win-card p { margin: 0 0 18px; color: #94a3b8; font-size: 14px; }
   .win-card p b { color: #f1f5f9; font-size: 18px; }
-  .win-card button {
-    width: 100%;
-    padding: 14px;
-    background: #2563eb;
-    color: #fff;
-    border: 0;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: transform 0.08s, filter 0.1s;
-  }
-  .win-card button:active { transform: scale(0.97); filter: brightness(1.15); }
 
   .toast {
     position: fixed;
@@ -273,10 +259,10 @@
 
 <div class="overlay hidden" id="winOverlay">
   <div class="win-card">
-    <div class="big-emoji" id="winEmoji">🎉</div>
-    <h2 id="winTitle">Correct!</h2>
-    <p>Score: <b id="winScore">0</b></p>
-    <button id="nextBtn">Next Word →</button>
+    <div class="big-emoji" id="winEmoji">💥</div>
+    <h2>Game Over!</h2>
+    <p>Final Score: <b id="winScore">0</b></p>
+    <p style="font-size:12px; color:#64748b; margin-top:8px;">Use your device back button to exit.</p>
   </div>
 </div>
 
@@ -312,7 +298,9 @@
     slots: [],
     pool: [],
     score: 0,
-    locked: false
+    locked: false,
+    gameOver: false,
+    strikes: 0
   };
 
   const usedWords = new Set();
@@ -356,6 +344,7 @@
   }
 
   function loadWord() {
+    if (state.gameOver) return;
     const w = pickWord();
     state.word   = w.word;
     state.emoji  = w.emoji;
@@ -367,6 +356,7 @@
   }
 
   function render() {
+    if (state.gameOver) return;
     emojiEl.textContent = state.emoji;
     emojiEl.style.animation = "none";
     emojiEl.offsetHeight;
@@ -388,7 +378,7 @@
         slot.classList.add("filled");
         slot.textContent = item.letter;
       }
-      if (state.locked) slot.disabled = true;
+      if (state.locked || state.gameOver) slot.disabled = true;
       slot.addEventListener("click", () => removeFromSlot(i));
       slotsEl.appendChild(slot);
     });
@@ -402,14 +392,14 @@
       tile.className = "tile";
       tile.textContent = item.letter;
       if (item.used) tile.classList.add("used");
-      if (state.locked) tile.disabled = true;
+      if (state.locked || state.gameOver) tile.disabled = true;
       tile.addEventListener("click", () => pickFromPool(i));
       poolEl.appendChild(tile);
     });
   }
 
   function pickFromPool(poolIdx) {
-    if (state.locked) return;
+    if (state.locked || state.gameOver) return;
     const item = state.pool[poolIdx];
     if (!item || item.used) return;
     const emptySlot = state.slots.findIndex(s => s === null);
@@ -422,7 +412,7 @@
   }
 
   function removeFromSlot(slotIdx) {
-    if (state.locked) return;
+    if (state.locked || state.gameOver) return;
     const item = state.slots[slotIdx];
     if (!item) return;
     item.used = false;
@@ -432,7 +422,7 @@
   }
 
   function backspace() {
-    if (state.locked) return;
+    if (state.locked || state.gameOver) return;
     for (let i = state.slots.length - 1; i >= 0; i--) {
       if (state.slots[i]) {
         removeFromSlot(i);
@@ -443,20 +433,19 @@
   }
 
   function shufflePool() {
-    if (state.locked) return;
+    if (state.locked || state.gameOver) return;
     state.pool = shuffle(state.pool);
     renderPool();
     toast("Shuffled!");
   }
 
   function skipWord() {
-    if (state.locked) return;
-    toast("Skipped");
-    loadWord();
+    if (state.locked || state.gameOver) return;
+    triggerGameOver("Word skipped. Game Over!");
   }
 
   function checkComplete() {
-    if (state.slots.some(s => s === null)) return;
+    if (state.slots.some(s => s === null) || state.gameOver) return;
 
     const guess = state.slots.map(s => s.letter).join("");
     state.locked = true;
@@ -464,31 +453,42 @@
     if (guess === state.word) {
       slotsEl.querySelectorAll(".slot").forEach(el => el.classList.add("correct"));
       setTimeout(() => {
+        if (state.gameOver) return;
         state.score++;
         scoreEl.textContent = state.score;
         scoreBadge.classList.remove("bump");
         void scoreBadge.offsetWidth;
         scoreBadge.classList.add("bump");
-
-        document.getElementById("winEmoji").textContent = state.emoji;
-        document.getElementById("winTitle").textContent = "Correct! 🎉";
-        document.getElementById("winScore").textContent = state.score;
-        winOverlay.classList.remove("hidden");
+        loadWord();
       }, 400);
     } else {
       slotsEl.querySelectorAll(".slot").forEach(el => el.classList.add("wrong"));
       setTimeout(() => {
-        state.slots.forEach(item => { if (item) item.used = false; });
-        state.slots = state.slots.map(() => null);
-        state.locked = false;
-        render();
-        toast("Galat! Phir try karo");
+        if (state.gameOver) return;
+        triggerGameOver("Incorrect guess. Game Over!");
       }, 700);
     }
   }
 
+  function triggerGameOver(reason) {
+    if (state.gameOver) return;
+    state.gameOver = true;
+    state.locked = true;
+
+    // Stop all interactive states
+    slotsEl.querySelectorAll(".slot").forEach(el => el.disabled = true);
+    poolEl.querySelectorAll(".tile").forEach(el => el.disabled = true);
+    document.getElementById("backBtn").disabled = true;
+    document.getElementById("shuffleBtn").disabled = true;
+    document.getElementById("skipBtn").disabled = true;
+
+    document.getElementById("winScore").textContent = state.score;
+    winOverlay.classList.remove("hidden");
+  }
+
   let toastTimer = null;
   function toast(msg) {
+    if (state.gameOver) return;
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
@@ -498,11 +498,10 @@
   document.getElementById("backBtn").addEventListener("click", backspace);
   document.getElementById("shuffleBtn").addEventListener("click", shufflePool);
   document.getElementById("skipBtn").addEventListener("click", skipWord);
-  document.getElementById("nextBtn").addEventListener("click", loadWord);
 
   // Desktop keyboard support
   window.addEventListener("keydown", (e) => {
-    if (state.locked) return;
+    if (state.locked || state.gameOver) return;
     const key = e.key.toUpperCase();
     if (/^[A-Z]$/.test(key)) {
       const idx = state.pool.findIndex(p => !p.used && p.letter === key);
