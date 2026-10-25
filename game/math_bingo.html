@@ -390,15 +390,6 @@
   }
   .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(124,77,255,0.55); }
   .btn:active { transform: scale(0.97); }
-  .btn.ghost {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.15);
-    box-shadow: none;
-    font-size: 0.85rem;
-    padding: 10px;
-    margin-bottom: 0;
-  }
-  .btn.ghost:hover { background: rgba(255,255,255,0.06); box-shadow: none; }
 
   .sound-toggle {
     position: absolute;
@@ -459,7 +450,9 @@
     <div class="diff-picker" id="diffPicker"></div>
     <div class="overlay-stats" id="ovStats"></div>
     <button class="btn" id="ovBtn"></button>
-    <button class="btn ghost" id="ovBtn2" style="display:none;"></button>
+    <div id="backPrompt" class="text-xs text-slate-400 italic mt-3" style="display:none;">
+      बाहर निकलने के लिए अपने डिवाइस के बैक बटन का उपयोग करें।
+    </div>
   </div>
 </div>
 
@@ -613,7 +606,6 @@ function tryGenerateForAnswer(answer, op, cfg) {
   const maxOp = cfg.opMax;
 
   if (op === '+') {
-    // a + b = answer, a,b ∈ [1, maxOp]
     const lo = Math.max(1, answer - maxOp);
     const hi = Math.min(maxOp, answer - 1);
     if (lo > hi) return null;
@@ -621,12 +613,10 @@ function tryGenerateForAnswer(answer, op, cfg) {
     return { a, b: answer - a, op: '+', answer };
   }
   if (op === '-') {
-    // a - b = answer, b ∈ [1, maxOp], a = answer + b
     const b = randInt(1, maxOp);
     return { a: answer + b, b, op: '-', answer };
   }
   if (op === '×') {
-    // a × b = answer, a,b ∈ [1, maxOp]
     const factors = [];
     for (let i = 1; i <= maxOp; i++) {
       if (answer % i === 0 && answer / i <= maxOp) factors.push(i);
@@ -636,7 +626,6 @@ function tryGenerateForAnswer(answer, op, cfg) {
     return { a, b: answer / a, op: '×', answer };
   }
   if (op === '÷') {
-    // a ÷ b = answer, b ∈ [1, maxOp], a = answer * b
     const b = randInt(1, maxOp);
     const a = answer * b;
     if (a > 999) return null;
@@ -663,7 +652,6 @@ function pickQuestion() {
     const q = generateQuestionForAnswer(state.grid[idx], cfg);
     if (q) return q;
   }
-  // Fallback - shouldn't happen
   const idx = shuffled[0];
   return { a: state.grid[idx], b: 0, op: '+', answer: state.grid[idx] };
 }
@@ -776,7 +764,6 @@ function handleCorrect(idx, cell) {
   playCorrect(state.streak);
   updateHUD();
 
-  // Check bingos on this move
   const newBingos = [];
   LINES.forEach((line, lineIdx) => {
     if (!state.bingoedLines.has(lineIdx) && line.every(i => state.marked.has(i))) {
@@ -785,7 +772,6 @@ function handleCorrect(idx, cell) {
   });
 
   if (state.marked.size === 9) {
-    // SUPER BINGO — full board
     setTimeout(() => triggerSuperBingo(newBingos), 420);
     return;
   }
@@ -829,7 +815,6 @@ function triggerSuperBingo(newBingos) {
 
   setTimeout(() => {
     if (state.status !== 'playing') return;
-    // Reset board with new numbers
     state.grid = generateGrid(DIFFICULTIES[state.difficulty]);
     state.marked = new Set();
     state.bingoedLines = new Set();
@@ -854,6 +839,7 @@ function handleWrong(cell) {
 function endGame() {
   if (state.status !== 'playing') return;
   state.status = 'over';
+  state.locked = true;
 
   const prev = state.best[state.difficulty];
   const isNew = state.score > prev;
@@ -953,11 +939,11 @@ function showStartOverlay() {
   $('ovStats').innerHTML = '';
   $('diffPicker').style.display = 'grid';
   renderDiffPicker();
+  $('backPrompt').style.display = 'none';
 
   const btn = $('ovBtn');
   btn.textContent = '▶  खेलना शुरू करें';
   btn.onclick = startGame;
-  $('ovBtn2').style.display = 'none';
 
   overlay.classList.add('show');
 }
@@ -965,7 +951,7 @@ function showStartOverlay() {
 function showGameOverOverlay(isNew) {
   $('ovIcon').textContent = isNew ? '🏆' : '⏱️';
   $('ovTitle').textContent = isNew ? 'नया रिकॉर्ड!' : 'समय खत्म!';
-  $('ovSub').textContent = isNew ? 'शानदार प्रदर्शन! 🎉' : 'अच्छी कोशिश — फिर से खेलो!';
+  $('ovSub').textContent = isNew ? 'शानदार प्रदर्शन! 🎉' : 'गेम ओवर - खेल समाप्त हो चुका है।';
 
   $('diffPicker').style.display = 'none';
 
@@ -984,13 +970,8 @@ function showGameOverOverlay(isNew) {
   });
 
   const btn = $('ovBtn');
-  btn.textContent = '🔄  फिर से खेलें';
-  btn.onclick = startGame;
-
-  const btn2 = $('ovBtn2');
-  btn2.style.display = 'block';
-  btn2.textContent = '⚙️  कठिनाई बदलें';
-  btn2.onclick = showStartOverlay;
+  btn.style.display = 'none';
+  $('backPrompt').style.display = 'block';
 
   overlay.classList.add('show');
 }
