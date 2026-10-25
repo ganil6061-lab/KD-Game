@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>I Spy — खोजो और जीतो</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
   :root {
     --accent: #00e5ff;
     --accent2: #7c4dff;
@@ -151,7 +151,6 @@
     font-family: inherit;
     transition: transform 0.15s, background 0.15s, box-shadow 0.2s, opacity 0.3s;
     animation: popIn 0.35s cubic-bezier(.2,.9,.3,1.4) backwards;
-    user-select: none;
   }
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.3); }
@@ -346,13 +345,16 @@
   <div class="game-area" id="gameArea"></div>
 </div>
 
+<!-- Strict Game Over Overlay (No Restart Buttons, Exit via Android Back button) -->
 <div class="overlay" id="overlay">
   <div class="overlay-card">
-    <div class="overlay-icon" id="ovIcon">🔍</div>
-    <h1 class="overlay-title" id="ovTitle">I Spy</h1>
-    <p class="overlay-sub" id="ovSub"></p>
+    <div class="overlay-icon" id="ovIcon">⏱️</div>
+    <h1 class="overlay-title" id="ovTitle">समय समाप्त</h1>
+    <p class="overlay-sub" id="ovSub">खेल समाप्त हो चुका है।</p>
     <div class="overlay-stats" id="ovStats"></div>
-    <button class="btn" id="ovBtn"></button>
+    <div class="text-xs text-slate-400 italic">
+      बाहر निकलने के लिए अपने डिवाइस के बैक बटन का उपयोग करें।
+    </div>
   </div>
 </div>
 
@@ -393,7 +395,7 @@ const MAX_TIME = 60;
 
 /* ================= STATE ================= */
 const state = {
-  status: 'idle',   // idle | playing | over
+  status: 'playing',   // playing | over
   score: 0,
   best: 0,
   streak: 0,
@@ -527,6 +529,7 @@ function layoutEmojis(pool) {
 
 /* ================= ROUND ================= */
 function newRound() {
+  if (state.status !== 'playing') return;
   state.locked = false;
   clearTimeout(state.hintTimer);
 
@@ -542,6 +545,7 @@ function newRound() {
   layoutEmojis(pool);
 
   state.hintTimer = setTimeout(() => {
+    if (state.status !== 'playing') return;
     const t = state.emojiList.find(e => e.obj.emoji === state.target.emoji);
     if (t) t.el.classList.add('hint');
   }, 3500);
@@ -622,25 +626,7 @@ function burst(cx, cy) {
   }
 }
 
-/* ================= GAME FLOW ================= */
-function startGame() {
-  initAudio();
-  playStart();
-  overlay.classList.remove('show');
-
-  state.status = 'playing';
-  state.score = 0;
-  state.streak = 0;
-  state.bestStreak = 0;
-  state.timeLeft = MAX_TIME;
-  state.correctCount = 0;
-  state.locked = false;
-  lastTs = 0;
-
-  updateHUD();
-  newRound();
-}
-
+/* ================= STRICT GAME OVER STATE MANAGEMENT ================= */
 function endGame() {
   if (state.status !== 'playing') return;
   state.status = 'over';
@@ -656,7 +642,7 @@ function endGame() {
 
   document.querySelectorAll('.emoji').forEach(e => {
     e.classList.add('dim');
-    if (e.dataset.emoji === state.target.emoji) {
+    if (state.target && e.dataset.emoji === state.target.emoji) {
       e.classList.remove('dim', 'hint');
       e.classList.add('reveal');
     }
@@ -667,15 +653,21 @@ function endGame() {
   setTimeout(() => showOverOverlay(isNew), 750);
 }
 
-/* ================= OVERLAY ================= */
-function openOverlay({ icon, title, sub, stats, btn, onClick }) {
-  $('ovIcon').textContent = icon;
-  $('ovTitle').textContent = title;
-  $('ovSub').textContent = sub;
+function showOverOverlay(isNew) {
+  $('ovIcon').textContent = isNew ? '🏆' : '⏱️';
+  $('ovTitle').textContent = isNew ? 'नया रिकॉर्ड!' : 'समय खत्म!';
+  $('ovSub').textContent = isNew ? 'शानदार प्रदर्शन! 🎉' : 'गेम ओवर - आपने सभी प्रयास पूरे किए।';
+
+  const statsData = [
+    ['स्कोर', state.score],
+    ['सही जवाब', state.correctCount],
+    ['बेस्ट स्ट्रीक', state.bestStreak],
+    ['बेस्ट स्कोर', state.best],
+  ];
 
   const s = $('ovStats');
   s.innerHTML = '';
-  (stats || []).forEach(([k, v]) => {
+  statsData.forEach(([k, v]) => {
     const d = document.createElement('div');
     d.className = 'ov-stat';
     const sp = document.createElement('span'); sp.textContent = k;
@@ -684,38 +676,7 @@ function openOverlay({ icon, title, sub, stats, btn, onClick }) {
     s.appendChild(d);
   });
 
-  const b = $('ovBtn');
-  b.textContent = btn;
-  b.onclick = onClick;
-
   overlay.classList.add('show');
-}
-
-function showStartOverlay() {
-  openOverlay({
-    icon: '🔍',
-    title: 'I Spy',
-    sub: 'स्क्रीन पर छिपी चीज़ें ढूँढो, तेज़ रहो और स्कोर बनाओ!',
-    stats: [['बेस्ट स्कोर', state.best], ['कुल समय', MAX_TIME + 's']],
-    btn: '▶  खेलना शुरू करें',
-    onClick: startGame,
-  });
-}
-
-function showOverOverlay(isNew) {
-  openOverlay({
-    icon: isNew ? '🏆' : '⏱️',
-    title: isNew ? 'नया रिकॉर्ड!' : 'समय खत्म!',
-    sub: isNew ? 'शानदार प्रदर्शन! 🎉' : 'अच्छी कोशिश — फिर से खेलो!',
-    stats: [
-      ['स्कोर', state.score],
-      ['सही जवाब', state.correctCount],
-      ['बेस्ट स्ट्रीक', state.bestStreak],
-      ['बेस्ट स्कोर', state.best],
-    ],
-    btn: '🔄  फिर से खेलें',
-    onClick: startGame,
-  });
 }
 
 /* ================= MAIN LOOP ================= */
@@ -743,7 +704,15 @@ function loop(ts) {
 (function init() {
   state.best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
   updateHUD();
-  showStartOverlay();
+  initAudio();
+  state.status = 'playing';
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.timeLeft = MAX_TIME;
+  state.correctCount = 0;
+  state.locked = false;
+  newRound();
   requestAnimationFrame(loop);
 })();
 </script>
