@@ -8,10 +8,12 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#667eea,#764ba2);font-family:'Segoe UI',system-ui,sans-serif}
 .app{width:100%;max-width:420px;height:746px;max-height:100vh;background:linear-gradient(160deg,#f8f9ff,#e8ecff);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
-header{padding:18px;background:linear-gradient(135deg,#5b6ef5,#8b5cf6);color:#fff;text-align:center}
-header h1{font-size:22px;margin-bottom:10px}
-.stats{display:flex;justify-content:space-around;font-size:14px;font-weight:600}
+header{padding:16px 18px;background:linear-gradient(135deg,#5b6ef5,#8b5cf6);color:#fff;text-align:center;position:relative}
+header h1{font-size:22px;margin-bottom:8px}
+.stats{display:flex;justify-content:space-around;font-size:14px;font-weight:600;align-items:center}
 .stats span{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.sound-toggle{background:rgba(255,255,255,0.25);border:none;color:#fff;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;transition:background 0.2s}
+.sound-toggle:hover{background:rgba(255,255,255,0.35)}
 .grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:12px;padding:20px}
 .card{perspective:1000px;cursor:pointer}
 .card-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
@@ -28,6 +30,8 @@ header h1{font-size:22px;margin-bottom:10px}
 @keyframes fade{from{opacity:0}}
 .win h2{font-size:36px;margin-bottom:12px}
 .win p{font-size:16px;opacity:0.85;margin-bottom:8px;line-height:1.5}
+.restart-btn{margin-top:16px;background:linear-gradient(135deg,#5b6ef5,#8b5cf6);color:#fff;border:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(91,110,245,.5);transition:transform 0.2s}
+.restart-btn:active{transform:scale(0.95)}
 .back-hint{font-size:13px;opacity:0.6;font-style:italic;margin-top:16px}
 </style>
 </head>
@@ -35,16 +39,132 @@ header h1{font-size:22px;margin-bottom:10px}
 <div class="app">
   <header>
     <h1>🧠 Memory Match</h1>
-    <div class="stats"><span>Moves: <b id="moves">0</b></span><span>Time: <b id="timer">0s</b></span></div>
+    <div class="stats">
+      <span>Moves: <b id="moves">0</b></span>
+      <span>Time: <b id="timer">0s</b></span>
+      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊 Sound: On</button>
+    </div>
   </header>
   <div class="grid" id="grid"></div>
   <div class="win" id="win">
     <h2>🎉 Victory!</h2>
     <p id="winStats"></p>
+    <button class="restart-btn" onclick="init()">Play Again</button>
     <p class="back-hint">Use your device's back button to exit.</p>
   </div>
 </div>
+
 <script>
+// Web Audio API Sound Synthesizer
+let audioCtx = null;
+let soundEnabled = true;
+let bgMusicInterval = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('soundToggle');
+  btn.textContent = soundEnabled ? '🔊 Sound: On' : '🔇 Sound: Off';
+  if (!soundEnabled) {
+    stopBgMusic();
+  } else if (started && !gameOver) {
+    startBgMusic();
+  }
+}
+
+// Play pleasant synthetic sound effects
+function playSound(type) {
+  if (!soundEnabled) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (type === 'flip') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(350, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } else if (type === 'match') {
+    // Chime sound
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } else if (type === 'mismatch') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.linearRampToValueAtTime(140, now + 0.15);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === 'win') {
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, now + i * 0.12);
+      g.gain.setValueAtTime(0.2, now + i * 0.12);
+      g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.3);
+      o.start(now + i * 0.12);
+      o.stop(now + i * 0.12 + 0.3);
+    });
+  }
+}
+
+// Gentle ambient background rhythm
+function startBgMusic() {
+  if (bgMusicInterval || !soundEnabled) return;
+  const chordNotes = [261.63, 329.63, 392.00, 523.25]; // C major chord frequencies
+  let step = 0;
+  bgMusicInterval = setInterval(() => {
+    if (!soundEnabled || gameOver) return;
+    initAudio();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(chordNotes[step % chordNotes.length], now);
+    gain.gain.setValueAtTime(0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    
+    osc.start(now);
+    osc.stop(now + 0.8);
+    step++;
+  }, 2000);
+}
+
+function stopBgMusic() {
+  if (bgMusicInterval) {
+    clearInterval(bgMusicInterval);
+    bgMusicInterval = null;
+  }
+}
+
 const emojis=['🐶','🐱','🐰','🦊','🐼','🐸'];
 let cards=[],flipped=[],matched=0,moves=0,timer=0,interval=null,started=false,gameOver=false;
 const grid=document.getElementById('grid'),movesEl=document.getElementById('moves'),timerEl=document.getElementById('timer'),winEl=document.getElementById('win'),winStats=document.getElementById('winStats');
@@ -58,6 +178,7 @@ function shuffle(a){
 }
 
 function init(){
+  stopBgMusic();
   cards=shuffle([...emojis,...emojis]);matched=0;moves=0;flipped=[];timer=0;started=false;gameOver=false;
   clearInterval(interval);movesEl.textContent=0;timerEl.textContent='0s';winEl.classList.remove('show');
   grid.innerHTML='';
@@ -70,17 +191,31 @@ function init(){
 
 function flip(card){
   if(gameOver)return;
-  if(!started){started=true;interval=setInterval(()=>{timer++;timerEl.textContent=timer+'s'},1000)}
+  if(!started){
+    started=true;
+    startBgMusic();
+    interval=setInterval(()=>{timer++;timerEl.textContent=timer+'s'},1000);
+  }
   if(card.classList.contains('flipped')||card.classList.contains('matched')||flipped.length===2)return;
-  card.classList.add('flipped');flipped.push(card);
+  
+  playSound('flip');
+  card.classList.add('flipped');
+  flipped.push(card);
+  
   if(flipped.length===2){
     moves++;movesEl.textContent=moves;
     const [a,b]=flipped;
     if(a.dataset.emoji===b.dataset.emoji){
-      setTimeout(()=>{a.classList.add('matched');b.classList.add('matched');matched++;flipped=[];
-        if(matched===6)win();},500);
+      setTimeout(()=>{
+        playSound('match');
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matched++;
+        flipped=[];
+        if(matched===6)win();
+      },500);
     }else{
-      setTimeout(()=>{a.classList.add('shake');b.classList.add('shake');},300);
+      setTimeout(()=>{playSound('mismatch');a.classList.add('shake');b.classList.add('shake');},300);
       setTimeout(()=>{a.classList.remove('flipped','shake');b.classList.remove('flipped','shake');flipped=[];},1000);
     }
   }
@@ -89,6 +224,8 @@ function flip(card){
 function win(){
   gameOver=true;
   clearInterval(interval);
+  stopBgMusic();
+  playSound('win');
   winStats.textContent=`Final Score — Moves: ${moves} | Time: ${timer}s`;
   winEl.classList.add('show');
 }
