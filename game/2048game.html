@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 Number Addition Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tile-2 { background-color: #3b82f6; color: #ffffff; }
+        .tile-4 { background-color: #2563eb; color: #ffffff; }
+        .tile-8 { background-color: #f97316; color: #ffffff; }
+        .tile-16 { background-color: #ea580c; color: #ffffff; }
+        .tile-32 { background-color: #ef4444; color: #ffffff; }
+        .tile-64 { background-color: #dc2626; color: #ffffff; }
+        .tile-128 { background-color: #eab308; color: #1e1b4b; font-weight: 800; box-shadow: 0 0 15px rgba(234, 179, 8, 0.5); }
+        .tile-256 { background-color: #ca8a04; color: #1e1b4b; font-weight: 800; box-shadow: 0 0 20px rgba(202, 138, 4, 0.6); }
+        .tile-512 { background-color: #a855f7; color: #ffffff; font-weight: 800; box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); }
+        .tile-1024 { background-color: #9333ea; color: #ffffff; font-weight: 800; box-shadow: 0 0 25px rgba(147, 51, 234, 0.7); }
+        .tile-2048 { background-color: #ec4899; color: #ffffff; font-weight: 800; box-shadow: 0 0 30px rgba(236, 72, 153, 0.8); }
+        .tile-super { background-color: #6366f1; color: #ffffff; font-weight: 800; box-shadow: 0 0 35px rgba(99, 102, 241, 0.9); }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .tile-new { animation: pop 0.2s ease-in-out forwards; }
+        @keyframes merge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .tile-merged { animation: merge 0.2s ease-in-out forwards; }
+
+        /* Freeze helper: applied to body on game over to kill all CSS animations */
+        .game-frozen *, .game-frozen *::before, .game-frozen *::after {
+            animation: none !important;
+            transition: none !important;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 md:p-6 select-none overflow-x-hidden">
+
+    <header class="w-full max-w-md flex justify-between items-center my-2">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-wider bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 bg-clip-text text-transparent">2048</h1>
+            <p class="text-xs text-gray-400">Join numbers & get to the 2048 tile!</p>
+        </div>
+        <div class="flex gap-2 items-center">
+            <button onclick="toggleAudio()" id="audio-toggle-btn" class="glass-panel w-10 h-10 rounded-xl text-cyan-300 hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer" title="Toggle Audio">
+                <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <div class="glass-panel px-3 py-1.5 rounded-xl text-center">
+                <span class="text-[10px] text-gray-400 uppercase font-bold block">Score</span>
+                <span id="score" class="text-base md:text-lg font-bold font-mono text-yellow-400">0</span>
+            </div>
+            <div class="glass-panel px-3 py-1.5 rounded-xl text-center">
+                <span class="text-[10px] text-gray-400 uppercase font-bold block">Best</span>
+                <span id="best-score" class="text-base md:text-lg font-bold font-mono text-cyan-400">0</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="w-full max-w-md flex justify-between items-center my-2">
+        <span class="text-xs text-gray-300"><i class="fa-solid fa-arrows-up-down-left-right text-purple-400 mr-1"></i> Swipe on Board or Use Buttons</span>
+        <button onclick="restartGame()" id="new-game-btn" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-rotate-right"></i> New Game
+        </button>
+    </div>
+
+    <main id="game-board-container" class="relative w-full max-w-[360px] md:max-w-[400px] aspect-square glass-panel p-3 rounded-2xl shadow-2xl flex items-center justify-center my-2 cursor-pointer">
+        <div class="absolute inset-3 grid grid-cols-4 grid-rows-4 gap-3 pointer-events-none">
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+            <div class="bg-white/5 rounded-xl"></div>
+        </div>
+
+        <div id="tile-container" class="relative w-full h-full grid grid-cols-4 grid-rows-4 gap-3 z-10 pointer-events-none"></div>
+
+        <!-- GAME OVER OVERLAY: No restart / replay / reload buttons. -->
+        <div id="game-overlay" class="absolute inset-0 bg-black/85 backdrop-blur-md rounded-2xl z-30 flex flex-col items-center justify-center hidden transition-all p-6 text-center">
+            <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-full mb-3 text-red-400 text-3xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 id="overlay-title" class="text-2xl md:text-3xl font-extrabold mb-1 text-red-400">Game Over</h2>
+            <p id="overlay-desc" class="text-xs md:text-sm text-gray-300 mb-4">No more moves remaining on the board.</p>
+            <div class="glass-panel px-4 py-2 rounded-xl mb-4">
+                <span class="text-[10px] text-gray-400 uppercase font-bold block">Final Score</span>
+                <span id="final-score" class="text-xl font-bold font-mono text-yellow-400">0</span>
+            </div>
+            <p class="text-[11px] text-gray-400 max-w-[260px] leading-relaxed">
+                Use your device's back button to return to the previous activity.
+            </p>
+        </div>
+    </main>
+
+    <footer id="control-footer" class="w-full max-w-md flex flex-col items-center gap-2 my-2 bg-white/5 p-3 rounded-2xl border border-white/10 shadow-lg">
+        <span class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Quick Play Controls</span>
+        <div class="flex gap-3">
+            <button onclick="handleButtonMove('up')" class="glass-panel w-14 h-11 rounded-xl text-base text-cyan-300 hover:bg-white/10 active:bg-white/20 transition-all flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="handleButtonMove('left')" class="glass-panel w-14 h-11 rounded-xl text-base text-cyan-300 hover:bg-white/10 active:bg-white/20 transition-all flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button onclick="handleButtonMove('down')" class="glass-panel w-14 h-11 rounded-xl text-base text-cyan-300 hover:bg-white/10 active:bg-white/20 transition-all flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <button onclick="handleButtonMove('right')" class="glass-panel w-14 h-11 rounded-xl text-base text-cyan-300 hover:bg-white/10 active:bg-white/20 transition-all flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        let board = [];
+        let score = 0;
+        let bestScore = localStorage.getItem('2048_best_score') || 0;
+        let gameOver = false;
+        let gameWon = false;
+        let keepPlaying = false;
+        let audioMuted = false;
+
+        document.getElementById('best-score').innerText = bestScore;
+
+        // --- Web Audio API Sound Engine ---
+        let audioCtx = null;
+        let activeOscillators = [];
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudio() {
+            audioMuted = !audioMuted;
+            const icon = document.getElementById('audio-icon');
+            if (audioMuted) {
+                icon.className = "fa-solid fa-volume-xmark text-red-400";
+                stopAllSounds();
+            } else {
+                icon.className = "fa-solid fa-volume-high";
+                initAudioContext();
+            }
+        }
+
+        function stopAllSounds() {
+            activeOscillators.forEach(osc => {
+                try { osc.stop(); } catch (e) {}
+            });
+            activeOscillators = [];
+        }
+
+        function playSound(type) {
+            if (audioMuted) return;
+            initAudioContext();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            function makeOsc(oscType, startFreq, endFreq, rampTime, volume) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = oscType;
+                osc.frequency.setValueAtTime(startFreq, now);
+                osc.frequency.exponentialRampToValueAtTime(endFreq, now + rampTime);
+                gain.gain.setValueAtTime(volume, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + rampTime);
+                osc.start(now);
+                osc.stop(now + rampTime);
+                activeOscillators.push(osc);
+                osc.onended = () => {
+                    activeOscillators = activeOscillators.filter(o => o !== osc);
+                };
+                return osc;
+            }
+
+            if (type === 'move') {
+                makeOsc('sine', 220, 150, 0.08, 0.08);
+            } else if (type === 'merge') {
+                makeOsc('triangle', 350, 650, 0.15, 0.12);
+            } else if (type === 'spawn') {
+                makeOsc('sine', 520, 700, 0.05, 0.05);
+            } else if (type === 'win') {
+                const notes = [440, 554, 659, 880];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.1, now + idx * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.2);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.2);
+                    activeOscillators.push(o);
+                    o.onended = () => {
+                        activeOscillators = activeOscillators.filter(x => x !== o);
+                    };
+                });
+            } else if (type === 'gameover') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(70, now + 0.6);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+                activeOscillators.push(osc);
+                osc.onended = () => {
+                    activeOscillators = activeOscillators.filter(x => x !== osc);
+                };
+            }
+        }
+
+        function restartGame() {
+            // Game Over freeze rule: New Game button is disabled once game over.
+            // (The header button is intentionally non-functional in game-over state.)
+            if (gameOver) return;
+
+            board = [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ];
+            score = 0;
+            gameOver = false;
+            gameWon = false;
+            keepPlaying = false;
+            document.getElementById('game-overlay').classList.add('hidden');
+            document.body.classList.remove('game-frozen');
+            document.getElementById('new-game-btn').classList.remove('opacity-40', 'pointer-events-none', 'cursor-not-allowed');
+            document.getElementById('control-footer').classList.remove('opacity-40', 'pointer-events-none');
+            updateScore();
+            addNewTile();
+            addNewTile();
+            renderBoard();
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = score;
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('2048_best_score', bestScore);
+                document.getElementById('best-score').innerText = bestScore;
+            }
+        }
+
+        function addNewTile() {
+            let emptyCells = [];
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (board[r][c] === 0) {
+                        emptyCells.push({r, c});
+                    }
+                }
+            }
+            if (emptyCells.length > 0) {
+                let randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                board[randomCell.r][randomCell.c] = Math.random() < 0.9 ? 2 : 4;
+                playSound('spawn');
+            }
+        }
+
+        function renderBoard() {
+            const container = document.getElementById('tile-container');
+            container.innerHTML = '';
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    let val = board[r][c];
+                    let tileDiv = document.createElement('div');
+                    tileDiv.className = "w-full h-full rounded-xl flex items-center justify-center text-xl md:text-2xl font-bold transition-all";
+
+                    if (val > 0) {
+                        let tileClass = val <= 2048 ? `tile-${val}` : 'tile-super';
+                        tileDiv.classList.add(...tileClass.split(' '));
+                        tileDiv.innerText = val;
+                    }
+                    container.appendChild(tileDiv);
+                }
+            }
+        }
+
+        function slide(row) {
+            let arr = row.filter(val => val !== 0);
+            let mergedInRow = false;
+            for (let i = 0; i < arr.length - 1; i++) {
+                if (arr[i] === arr[i + 1]) {
+                    arr[i] *= 2;
+                    score += arr[i];
+                    mergedInRow = true;
+                    if (arr[i] === 2048 && !gameWon && !keepPlaying) {
+                        triggerVictory();
+                    }
+                    arr[i + 1] = 0;
+                }
+            }
+            arr = arr.filter(val => val !== 0);
+            while (arr.length < 4) {
+                arr.push(0);
+            }
+            return { arr, merged: mergedInRow };
+        }
+
+        function rotateLeft(matrix) {
+            let result = Array.from({length: 4}, () => Array(4).fill(0));
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    result[3 - c][r] = matrix[r][c];
+                }
+            }
+            return result;
+        }
+
+        function rotateRight(matrix) {
+            let result = Array.from({length: 4}, () => Array(4).fill(0));
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    result[c][3 - r] = matrix[r][c];
+                }
+            }
+            return result;
+        }
+
+        function moveLeft() {
+            let moved = false;
+            let anyMerge = false;
+            for (let r = 0; r < 4; r++) {
+                let original = [...board[r]];
+                let res = slide(board[r]);
+                board[r] = res.arr;
+                if (res.merged) anyMerge = true;
+                if (original.toString() !== board[r].toString()) {
+                    moved = true;
+                }
+            }
+            return { moved, anyMerge };
+        }
+
+        function moveRight() {
+            board = board.map(row => row.reverse());
+            let result = moveLeft();
+            board = board.map(row => row.reverse());
+            return result;
+        }
+
+        function moveUp() {
+            board = rotateLeft(board);
+            let result = moveLeft();
+            board = rotateRight(board);
+            return result;
+        }
+
+        function moveDown() {
+            board = rotateRight(board);
+            let result = moveLeft();
+            board = rotateLeft(board);
+            return result;
+        }
+
+        function handleMove(direction) {
+            // Rule 1: stop all inputs immediately once game over.
+            if (gameOver) return;
+            let result = { moved: false, anyMerge: false };
+            if (direction === 'left') result = moveLeft();
+            else if (direction === 'right') result = moveRight();
+            else if (direction === 'up') result = moveUp();
+            else if (direction === 'down') result = moveDown();
+
+            if (result.moved) {
+                playSound('move');
+                if (result.anyMerge) playSound('merge');
+                addNewTile();
+                updateScore();
+                renderBoard();
+
+                if (isGameOver()) {
+                    triggerGameOver();
+                }
+            }
+        }
+
+        function handleButtonMove(dir) {
+            if (gameOver) return;
+            handleMove(dir);
+        }
+
+        function isGameOver() {
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (board[r][c] === 0) return false;
+                    if (r < 3 && board[r][c] === board[r + 1][c]) return false;
+                    if (c < 3 && board[r][c] === board[r][c + 1]) return false;
+                }
+            }
+            return true;
+        }
+
+        function triggerGameOver() {
+            if (gameOver) return;
+            gameOver = true;
+
+            // Rule 1: stop ALL game sounds immediately (except the game over tone).
+            stopAllSounds();
+
+            // Rule 1: freeze all animations globally via CSS class.
+            document.body.classList.add('game-frozen');
+
+            // Rule 2: no restart/replay/reload buttons. Disable the New Game and
+            // directional controls so nothing on screen can reload the game.
+            document.getElementById('new-game-btn').classList.add('opacity-40', 'pointer-events-none', 'cursor-not-allowed');
+            document.getElementById('control-footer').classList.add('opacity-40', 'pointer-events-none');
+
+            // Rule 3: freeze screen with clean Game Over message + final score.
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-overlay').classList.remove('hidden');
+
+            // Play the single defeat tone.
+            playSound('gameover');
+
+            // Rule 4: user must use the physical/software back button to exit.
+            // We do NOT register any exit button or inline reload action.
+        }
+
+        function triggerVictory() {
+            gameWon = true;
+            playSound('win');
+        }
+
+        // Keyboard: blocked while gameOver.
+        window.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            switch(e.key) {
+                case 'ArrowLeft': handleMove('left'); e.preventDefault(); break;
+                case 'ArrowRight': handleMove('right'); e.preventDefault(); break;
+                case 'ArrowUp': handleMove('up'); e.preventDefault(); break;
+                case 'ArrowDown': handleMove('down'); e.preventDefault(); break;
+            }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const gameBoardContainer = document.getElementById('game-board-container');
+
+        gameBoardContainer.addEventListener('touchstart', (e) => {
+            if (gameOver) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, {passive: true});
+
+        gameBoardContainer.addEventListener('touchend', (e) => {
+            if (gameOver || !touchStartX || !touchStartY) return;
+            let touchEndX = e.changedTouches[0].clientX;
+            let touchEndY = e.changedTouches[0].clientY;
+
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 25) {
+                    if (diffX > 0) handleMove('right');
+                    else handleMove('left');
+                }
+            } else {
+                if (Math.abs(diffY) > 25) {
+                    if (diffY > 0) handleMove('down');
+                    else handleMove('up');
+                }
+            }
+            touchStartX = 0;
+            touchStartY = 0;
+        }, {passive: true});
+
+        window.onload = function() {
+            restartGame();
+        };
+    </script>
+</body>
+</html>
