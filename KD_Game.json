@@ -41,6 +41,12 @@
     "category": "Language",
     "img": "https://ganil6061-lab.github.io/KD-Game/icon/rhymingwords.png"
   },
+{
+    "name": "2048 Adison",
+    "description": "https://ganil6061-lab.github.io/KD-Game/game/2048game.html",
+    "category": "Math",
+    "img": "https://ganil6061-lab.github.io/KD-Game/icon/2048game.png"
+  },
   {
     "name": "Mini Chess",
     "description": "https://ganil6061-lab.github.io/KD-Game/game/mini_chess.html",
