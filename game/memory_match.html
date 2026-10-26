@@ -30,8 +30,6 @@ header h1{font-size:22px;margin-bottom:8px}
 @keyframes fade{from{opacity:0}}
 .win h2{font-size:36px;margin-bottom:12px}
 .win p{font-size:16px;opacity:0.85;margin-bottom:8px;line-height:1.5}
-.restart-btn{margin-top:16px;background:linear-gradient(135deg,#5b6ef5,#8b5cf6);color:#fff;border:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(91,110,245,.5);transition:transform 0.2s}
-.restart-btn:active{transform:scale(0.95)}
 .back-hint{font-size:13px;opacity:0.6;font-style:italic;margin-top:16px}
 </style>
 </head>
@@ -49,7 +47,6 @@ header h1{font-size:22px;margin-bottom:8px}
   <div class="win" id="win">
     <h2>🎉 Victory!</h2>
     <p id="winStats"></p>
-    <button class="restart-btn" onclick="init()">Play Again</button>
     <p class="back-hint">Use your device's back button to exit.</p>
   </div>
 </div>
@@ -99,11 +96,10 @@ function playSound(type) {
     osc.start(now);
     osc.stop(now + 0.08);
   } else if (type === 'match') {
-    // Chime sound
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523.25, now); // C5
-    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.setValueAtTime(659.25, now + 0.08);
+    osc.frequency.setValueAtTime(783.99, now + 0.16);
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
     osc.start(now);
@@ -136,7 +132,7 @@ function playSound(type) {
 // Gentle ambient background rhythm
 function startBgMusic() {
   if (bgMusicInterval || !soundEnabled) return;
-  const chordNotes = [261.63, 329.63, 392.00, 523.25]; // C major chord frequencies
+  const chordNotes = [261.63, 329.63, 392.00, 523.25];
   let step = 0;
   bgMusicInterval = setInterval(() => {
     if (!soundEnabled || gameOver) return;
