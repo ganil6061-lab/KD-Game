@@ -1,12 +1,5 @@
-Add a strict "Game Over" state management rule to the game code, along with game-matched sound effects:
-
-GAME OVER RULES:
+Add a strict 'Game Over' state management rule to the game code:
 1. When the game ends (whether by losing all lives/health or failing a level), stop all game loops, animations, and inputs immediately.
-2. Do NOT show any automatic restart, replay, or reload buttons.
-3. Freeze the screen with a clean "Game Over" message and final score (if applicable).
-4. Ensure the user must manually use the device's physical/software back button to exit the web view and return to the Android app's previous activity. Do not program any inline buttons that reload the game inside the web view.
-
-SOUND EFFECTS (must match the game's theme and actions):
-5. Add sound effects that fit the game — meaning the sounds should match the game's style and its events (e.g., jump sound when jumping, collect sound when picking up items, hit/damage sound on collision, level-up sound on clearing a level, power-up sound on gaining a boost, and a distinct defeat/Game Over sound when the game ends).
-6. Ensure all sounds stop immediately when the Game Over state triggers (except the Game Over sound itself, which should play once on defeat).
-7. Include a mute/unmute option so the player can toggle audio without breaking the Game Over freeze rule.
+2. Do NOT show any automatic restart, replay, or reload buttons. 
+3. Freeze the screen with a clean 'Game Over' message and final score (if applicable).
+4. Ensure the user must manually use the device's physical/software back button to exit the web view and return to the Android app's previous activity. Do not program any inline buttons that reload the game inside the web view. " is prompt me ye bhi ad karo ki iske sath hi game me sound bhi ad kare jo game ke hisab ka ho matlab matlab game se match kare
